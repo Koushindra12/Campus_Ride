@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Find a Ride — Campus Rides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:0.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-motorcycle" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div><h2>Campus Rides</h2><p>Smart ride sharing</p></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="name">{{ current_user_name }}</div>
+      <div class="role-badge {% if current_user_role == 'driver' %}role-driver{% else %}role-passenger{% endif %}">
+        {% if current_user_role == 'driver' %}<i class="fa-solid fa-motorcycle"></i> Driver
+        {% else %}<i class="fa-solid fa-user"></i> Passenger{% endif %}
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"    class="nav-item"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a href="/find-ride"    class="nav-item active"><i class="fa-solid fa-magnifying-glass"></i> <span>Find a Ride</span></a>
+      {% if current_user_role == 'driver' %}
+      <a href="/offer-ride"   class="nav-item"><i class="fa-solid fa-plus"></i> <span>Offer Ride</span></a>
+      <a href="/ride-requests" class="nav-item"><i class="fa-solid fa-clipboard-list"></i> <span>Ride Requests</span></a>
+      {% endif %}
+      <a href="/profile" class="nav-item"><i class="fa-solid fa-user"></i> <span>My Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/logout" class="nav-item" style="color:#f87171"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mobile-header">
+      <button class="hamburger" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <span style="font-weight:800;"><i class="fa-solid fa-magnifying-glass" style="color:#a78bfa;"></i> Find a Ride</span>
+      <span></span>
+    </div>
+
+    <div class="page-body">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-magnifying-glass-location" style="color:#a78bfa;"></i> Find a Ride</h1>
+        <p>Browse available campus rides near you</p>
+      </div>
+
+      <!-- New Ride Banner -->
+      <div id="new-ride-banner" style="display:none;margin-bottom:1rem;">
+        <div class="alert alert-success" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="location.reload()">
+          <span><i class="fa-solid fa-circle-info"></i> New rides added! Click to refresh.</span>
+          <i class="fa-solid fa-rotate"></i>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="card" style="margin-bottom:1.25rem;padding:1rem;">
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;position:relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);font-size:0.85rem;"></i>
+            <input type="text" id="search-input" placeholder="Search by location or destination..."
+              class="form-control" style="padding-left:2.5rem;" oninput="filterRides()"/>
+          </div>
+          <select id="sort-select" class="form-control" style="width:auto;" onchange="filterRides()">
+            <option value="time">Sort: Time</option>
+            <option value="price">Sort: Price</option>
+            <option value="seats">Sort: Seats</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Rides -->
+      <div id="rides-container">
+        {% if rides %}
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          {% for ride in rides %}
+          <div class="ride-card" data-location="{{ ride.start_location }}" data-dest="{{ ride.destination }}">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.85rem;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:1rem;">
+                  <i class="fa-solid fa-location-dot" style="color:#a78bfa;margin-right:0.3rem;"></i>
+                  {{ ride.start_location }}
+                </div>
+                <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin-top:0.15rem;">
+                  <i class="fa-solid fa-arrow-right" style="font-size:0.7rem;margin:0 0.3rem;"></i>
+                  <i class="fa-solid fa-flag-checkered" style="color:#86efac;margin-right:0.3rem;"></i>
+                  {{ ride.destination }}
+                </div>
+              </div>
+              <span style="padding:0.3rem 0.75rem;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:9999px;font-size:0.72rem;font-weight:700;color:#86efac;white-space:nowrap;">
+                <i class="fa-solid fa-user-group"></i> {{ ride.available_seats }} seat{% if ride.available_seats != 1 %}s{% endif %}
+              </span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;font-size:0.8rem;color:rgba(255,255,255,0.6);margin-bottom:1rem;padding-bottom:0.85rem;border-bottom:1px solid rgba(255,255,255,0.08);">
+              <span><i class="fa-solid fa-motorcycle"></i> {{ ride.driver_name }}</span>
+              <span><i class="fa-regular fa-clock"></i> {{ ride.datetime_str }}</span>
+              <span style="color:#fde68a;font-weight:700;"><i class="fa-solid fa-indian-rupee-sign"></i> {{ ride.price }}</span>
+              {% if ride.driver_vehicle %}<span style="text-transform:capitalize;"><i class="fa-solid fa-car"></i> {{ ride.driver_vehicle }}</span>{% endif %}
+            </div>
+            {% if ride.already_requested %}
+              {% if ride.req_status == 'accepted' %}
+                <div style="display:flex;align-items:center;gap:0.6rem;padding:0.75rem 1rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:0.6rem;">
+                  <i class="fa-solid fa-circle-check" style="color:#86efac;"></i>
+                  <span style="font-size:0.85rem;font-weight:700;color:#86efac;">Accepted — Check your OTP notification</span>
+                </div>
+              {% elif ride.req_status == 'rejected' %}
+                <div style="padding:0.75rem 1rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:0.6rem;font-size:0.85rem;font-weight:700;color:#fca5a5;">
+                  <i class="fa-solid fa-circle-xmark"></i> Request Rejected — Try another ride
+                </div>
+              {% else %}
+                <button disabled class="btn btn-outline btn-full" style="opacity:0.5;cursor:not-allowed;">
+                  <i class="fa-solid fa-hourglass-half"></i> Request Pending...
+                </button>
+              {% endif %}
+            {% elif current_user_id == ride.driver_id %}
+              <div style="display:flex;gap:0.6rem;">
+                <a href="/live-ride/{{ ride._id }}" class="btn btn-primary btn-sm" style="flex:1;text-align:center;"><i class="fa-solid fa-location-dot"></i> View Live</a>
+                <button onclick="cancelRide('{{ ride._id }}')" class="btn btn-danger btn-sm" style="flex:1;"><i class="fa-solid fa-ban"></i> Cancel</button>
+              </div>
+            {% else %}
+              <button onclick="requestRide('{{ ride._id }}', this)" id="req-btn-{{ ride._id }}" class="btn btn-primary btn-full">
+                <i class="fa-solid fa-hand"></i> Request This Ride
+              </button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-motorcycle" style="color:#a78bfa;"></i></div>
+            <h3>No rides available right now</h3>
+            <p>Check back later or ask a driver to offer a ride.</p>
+            {% if current_user_role == 'driver' %}
+            <a href="/offer-ride" class="btn btn-primary" style="margin-top:1.25rem;"><i class="fa-solid fa-plus"></i> Be the first to offer!</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="/dashboard" class="bottom-nav-item"><span><i class="fa-solid fa-house"></i></span><span>Home</span></a>
+    <a href="/find-ride" class="bottom-nav-item active"><span><i class="fa-solid fa-magnifying-glass"></i></span><span>Find</span></a>
+    {% if current_user_role == 'driver' %}
+    <a href="/offer-ride" class="bottom-nav-item"><span><i class="fa-solid fa-plus"></i></span><span>Offer</span></a>
+    <a href="/ride-requests" class="bottom-nav-item"><span><i class="fa-solid fa-clipboard-list"></i></span><span>Requests</span></a>
+    {% endif %}
+    <a href="/profile" class="bottom-nav-item"><span><i class="fa-solid fa-user"></i></span><span>Profile</span></a>
+  </div>
+</nav>
+
+<!-- OTP Modal -->
+<div class="modal-overlay" id="otp-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;text-align:center;margin-bottom:0.5rem;color:#86efac;"><i class="fa-solid fa-circle-check"></i></div>
+    <h3 style="text-align:center;">Ride Accepted!</h3>
+    <p id="otp-driver-info" style="text-align:center;"></p>
+    <div style="background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:0.75rem;padding:1.25rem;text-align:center;margin-bottom:1.25rem;">
+      <div style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;"><i class="fa-solid fa-lock"></i> Your OTP Code</div>
+      <div id="otp-display" style="font-size:2.8rem;font-weight:900;letter-spacing:0.45rem;color:#c4b5fd;"></div>
+      <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.4rem;">Share this code with your driver to start the ride</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="document.getElementById('otp-modal').classList.remove('open')">
+      <i class="fa-solid fa-thumbs-up"></i> Got it!
+    </button>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;text-align:center;margin-bottom:0.5rem;color:#fca5a5;"><i class="fa-solid fa-circle-xmark"></i></div>
+    <h3 style="text-align:center;">Ride Request Rejected</h3>
+    <p id="reject-msg" style="text-align:center;margin-bottom:1.25rem;"></p>
+    <button class="btn btn-danger btn-full" onclick="document.getElementById('reject-modal').classList.remove('open');location.reload()">
+      <i class="fa-solid fa-magnifying-glass"></i> Find Another Ride
+    </button>
+  </div>
+</div>
+
+<script>
+  const socket = io();
+  const userId = "{{ current_user_id }}";
+
+  socket.on('connect', () => { socket.emit('join_room', { room: userId }); });
+  socket.on('new_ride_notification', () => { document.getElementById('new-ride-banner').style.display='block'; });
+  socket.on('ride_accept_update', (data) => {
+    document.getElementById('otp-display').textContent = data.otp;
+    document.getElementById('otp-driver-info').textContent = `${data.driver_name} accepted your ride. Show this OTP to start.`;
+    document.getElementById('otp-modal').classList.add('open');
+    showToast('fa-circle-check','Ride Accepted!', data.message,'success');
+    setTimeout(() => location.reload(), 8000);
+  });
+  socket.on('ride_reject_update', (data) => {
+    document.getElementById('reject-msg').textContent = data.message;
+    document.getElementById('reject-modal').classList.add('open');
+    showToast('fa-circle-xmark','Ride Rejected', data.message,'error');
+  });
+  socket.on('ride_cancelled', () => location.reload());
+
+  function filterRides() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    document.querySelectorAll('.ride-card').forEach(c => {
+      const show = (c.dataset.location||'').toLowerCase().includes(q) || (c.dataset.dest||'').toLowerCase().includes(q);
+      c.style.display = show ? '' : 'none';
+    });
+  }
+
+  async function requestRide(rideId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+    try {
+      const res  = await fetch(`/request-ride/${rideId}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Request Sent! Waiting...';
+        btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
+        showToast('fa-circle-check','Request Sent!','Waiting for driver to accept...','success');
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + data.message;
+        btn.disabled = false;
+        showToast('fa-triangle-exclamation','Error', data.message,'error');
+        setTimeout(() => { btn.innerHTML='<i class="fa-solid fa-hand"></i> Request This Ride'; btn.disabled=false; }, 3000);
+      }
+    } catch(e) { btn.innerHTML='<i class="fa-solid fa-circle-xmark"></i> Network error.'; btn.disabled=false; }
+  }
+
+  async function cancelRide(rideId) {
+    if (!confirm('Cancel this ride?')) return;
+    const res  = await fetch(`/cancel-ride/${rideId}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) { showToast('fa-ban','Cancelled','Ride cancelled.','warning'); location.reload(); }
+    else showToast('fa-circle-xmark','Error', data.message,'error');
+  }
+
+  function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+
+  function showToast(icon,title,msg,type='info') {
+    const c=document.getElementById('toast-container');
+    const el=document.createElement('div');
+    el.className=`toast toast-${type}`;
+    el.innerHTML=`<span class="toast-icon"><i class="fa-solid ${icon}"></i></span><div style="flex:1;min-width:0;"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    c.appendChild(el); setTimeout(()=>el.remove(),5500);
+  }
+</script>
+</body>
+</html>

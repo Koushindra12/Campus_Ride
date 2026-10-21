@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Offer a Ride — Campus Rides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:0.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-motorcycle" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div><h2>Campus Rides</h2><p>Smart ride sharing</p></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="name">{{ current_user_name }}</div>
+      <div class="role-badge role-driver"><i class="fa-solid fa-motorcycle"></i> Driver</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"     class="nav-item"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a href="/find-ride"     class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> <span>Find a Ride</span></a>
+      <a href="/offer-ride"    class="nav-item active"><i class="fa-solid fa-plus"></i> <span>Offer Ride</span></a>
+      <a href="/ride-requests" class="nav-item"><i class="fa-solid fa-clipboard-list"></i> <span>Ride Requests</span></a>
+      <a href="/profile"       class="nav-item"><i class="fa-solid fa-user"></i> <span>My Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/logout" class="nav-item" style="color:#f87171"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mobile-header">
+      <button class="hamburger" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <span style="font-weight:800;"><i class="fa-solid fa-plus" style="color:#a78bfa;"></i> Offer Ride</span>
+      <span></span>
+    </div>
+
+    <div class="page-body">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-circle-plus" style="color:#a78bfa;"></i> Offer a Ride</h1>
+        <p>Create a ride and let passengers book seats</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <div class="card">
+        <form method="POST" action="/offer-ride" id="offer-form">
+          <div class="grid2">
+            <div class="form-group">
+              <label for="start_location"><i class="fa-solid fa-location-dot"></i> Start Location</label>
+              <input type="text" name="start_location" id="start_location" class="form-control"
+                placeholder="e.g. Saharanpur Bus Stand" required oninput="scheduleGeocode('start')"/>
+            </div>
+            <div class="form-group">
+              <label for="destination"><i class="fa-solid fa-flag-checkered"></i> Destination</label>
+              <input type="text" name="destination" id="destination" class="form-control"
+                placeholder="e.g. Shobhit University Gangoh" required oninput="scheduleGeocode('dest')"/>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-group">
+              <label for="ride_date"><i class="fa-solid fa-calendar-days"></i> Date</label>
+              <input type="date" name="ride_date" id="ride_date" class="form-control" required/>
+            </div>
+            <div class="form-group">
+              <label for="ride_time"><i class="fa-regular fa-clock"></i> Time</label>
+              <input type="time" name="ride_time" id="ride_time" class="form-control" required/>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-group">
+              <label for="seats"><i class="fa-solid fa-user-group"></i> Available Seats</label>
+              <select name="seats" id="seats" class="form-control">
+                <option value="1">1 Seat</option>
+                <option value="2" selected>2 Seats</option>
+                <option value="3">3 Seats</option>
+                <option value="4">4 Seats</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="price"><i class="fa-solid fa-indian-rupee-sign"></i> Price per Seat</label>
+              <select name="price" id="price" class="form-control">
+                <option value="15">₹15</option>
+                <option value="20">₹20</option>
+                <option value="25" selected>₹25</option>
+                <option value="30">₹30</option>
+                <option value="40">₹40</option>
+                <option value="50">₹50</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-map"></i> Route Preview</label>
+            <div id="offer-map" style="width:100%;height:220px;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(255,255,255,0.15);"></div>
+            <p style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.4rem;"><i class="fa-solid fa-circle-info"></i> Map updates as you type locations</p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="submit-btn" style="padding:1rem;font-size:1.05rem;">
+            <i class="fa-solid fa-rocket"></i> Create Ride &amp; Notify Students
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="/dashboard"     class="bottom-nav-item"><span><i class="fa-solid fa-house"></i></span><span>Home</span></a>
+    <a href="/find-ride"     class="bottom-nav-item"><span><i class="fa-solid fa-magnifying-glass"></i></span><span>Find</span></a>
+    <a href="/offer-ride"    class="bottom-nav-item active"><span><i class="fa-solid fa-plus"></i></span><span>Offer</span></a>
+    <a href="/ride-requests" class="bottom-nav-item"><span><i class="fa-solid fa-clipboard-list"></i></span><span>Requests</span></a>
+    <a href="/profile"       class="bottom-nav-item"><span><i class="fa-solid fa-user"></i></span><span>Profile</span></a>
+  </div>
+</nav>
+
+<script>
+  document.getElementById('ride_date').min = new Date().toISOString().split('T')[0];
+
+  const map = L.map('offer-map').setView([29.96, 77.55], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+  let startMarker, destMarker;
+
+  let geocodeTimers = {};
+  function scheduleGeocode(type) {
+    clearTimeout(geocodeTimers[type]);
+    geocodeTimers[type] = setTimeout(() => {
+      const val = type === 'start'
+        ? document.getElementById('start_location').value
+        : document.getElementById('destination').value;
+      if (val.length > 3) geocodeAndMark(val, type);
+    }, 600);
+  }
+
+  async function geocodeAndMark(query, type) {
+    try {
+      const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+      const data = await res.json();
+      if (!data.length) return;
+      const latlng = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      const color  = type === 'start' ? '#a78bfa' : '#86efac';
+      const icon   = L.divIcon({ html: `<div style="width:12px;height:12px;background:${color};border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px ${color}44;"></div>`, className: '', iconSize: [12, 12] });
+      if (type === 'start') { if (startMarker) map.removeLayer(startMarker); startMarker = L.marker(latlng, { icon }).addTo(map); }
+      else                  { if (destMarker)  map.removeLayer(destMarker);  destMarker  = L.marker(latlng, { icon }).addTo(map); }
+      map.setView(latlng, 12);
+    } catch(e) {}
+  }
+
+  document.getElementById('offer-form').addEventListener('submit', () => {
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Ride...';
+  });
+
+  function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+</script>
+</body>
+</html>

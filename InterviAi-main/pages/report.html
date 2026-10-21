@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Report — InterviAI</title>
+  <meta name="description" content="View your detailed AI-generated interview performance report with scores, strengths, and improvement plan.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" href="../assets/images/logo.png" type="image/png">
+  <style>
+    .reco-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      border-left: 4px solid var(--accent);
+      transition: all 0.2s;
+    }
+    .reco-card:hover { box-shadow: var(--shadow); }
+    .reco-card.purple { border-left-color: var(--purple); }
+    .reco-card.success { border-left-color: var(--success); }
+    .reco-card.warning { border-left-color: var(--warning); }
+
+    .day-plan-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .day-badge {
+      background: var(--accent);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-content">
+      <div id="topbar-placeholder"></div>
+
+      <main class="page-content">
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">Interview Performance Report</h1>
+            <p style="font-size:0.875rem;color:var(--text-secondary)" id="report-meta">Full Stack Developer • Technical Interview • Loading...</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn-hm btn-ghost btn-sm" onclick="window.print()" aria-label="Download report">
+              <i class="bi bi-download"></i> Download
+            </button>
+            <a href="configure.html" class="btn-hm btn-primary" id="practice-again-btn">
+              <i class="bi bi-arrow-repeat"></i> Practice Again
+            </a>
+          </div>
+        </div>
+
+        <!-- Score + Metrics Row -->
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;margin-bottom:20px" class="report-top-grid">
+
+          <!-- Score Ring -->
+          <div class="card-hm" style="text-align:center;padding:32px 24px">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:16px">Overall Score</div>
+
+            <div class="score-ring-container" style="margin-bottom:16px">
+              <svg width="140" height="140" style="transform:rotate(-90deg)" role="img" aria-label="Overall interview score">
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#f1f5f9" stroke-width="12"/>
+                <circle cx="70" cy="70" r="58" fill="none" id="score-ring-stroke"
+                  stroke="#2563eb" stroke-width="12"
+                  stroke-dasharray="364" stroke-dashoffset="364"
+                  stroke-linecap="round"
+                  style="transition:stroke-dashoffset 2s ease"/>
+              </svg>
+              <div class="score-ring-label">
+                <span id="main-score-num" class="score-num" style="font-size:2.2rem">0</span>
+                <span class="score-sub">/ 100</span>
+              </div>
+            </div>
+
+            <div id="score-verdict" style="display:inline-block;padding:4px 16px;border-radius:20px;font-size:0.8rem;font-weight:700;background:var(--accent-light);color:var(--accent)">
+              Good Performance
+            </div>
+
+            <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;text-align:left;font-size:0.8rem">
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Questions Answered</span>
+                <span id="q-answered" style="font-weight:600">10/10</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Duration</span>
+                <span id="r-duration" style="font-weight:600">18 min</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Tab Switches</span>
+                <span id="r-tabs" style="font-weight:600">0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Date</span>
+                <span id="r-date" style="font-weight:600">Sep 16, 2026</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metrics -->
+          <div class="card-hm">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <div>
+                <div class="card-title">Performance Metrics</div>
+                <div style="font-size:0.9rem;font-weight:700;color:var(--text-primary)">Category Breakdown</div>
+              </div>
+              <div style="height:160px;width:160px">
+                <canvas id="metrics-radar" aria-label="Performance metrics radar chart" role="img"></canvas>
+              </div>
+            </div>
+            <div id="metrics-bars" style="display:flex;flex-direction:column;gap:12px">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto">
+          <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">
+            <i class="bi bi-grid-1x2"></i> Overview
+          </button>
+          <button class="tab-btn" data-tab="recommendations" onclick="switchTab('recommendations')">
+            <i class="bi bi-lightbulb-fill"></i> Recommendations
+          </button>
+          <button class="tab-btn" data-tab="career" onclick="switchTab('career')">
+            <i class="bi bi-briefcase-fill"></i> Career Report
+          </button>
+          <button class="tab-btn" data-tab="plan" onclick="switchTab('plan')">
+            <i class="bi bi-calendar-check-fill"></i> 7-Day Plan
+          </button>
+        </div>
+
+        <style>
+          .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            font-family: inherit;
+          }
+          .tab-btn:hover { color: var(--accent); }
+          .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+          .tab-content { display: none; }
+          .tab-content.active { display: block; }
+        </style>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="tab-overview">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+            <!-- Strengths -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:12px">
+                <i class="bi bi-check-circle-fill" style="color:var(--success)"></i> Strengths
+              </div>
+              <div id="strengths-list" style="display:flex;flex-direction:column;gap:10px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Improvement Areas -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:12px">
+                <i class="bi bi-arrow-up-circle-fill" style="color:var(--warning)"></i> Areas to Improve
+              </div>
+              <div id="improvements-list" style="display:flex;flex-direction:column;gap:10px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Question Breakdown -->
+            <div class="card-hm" style="grid-column:1/-1">
+              <div class="card-title" style="margin-bottom:14px">Question-by-Question Performance</div>
+              <div id="question-breakdown" style="display:flex;flex-direction:column;gap:6px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommendations Tab -->
+        <div class="tab-content" id="tab-recommendations">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="reco-card">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Communication</div>
+              <div style="font-size:0.9rem;font-weight:700;margin-bottom:6px">Structured Answers</div>
+              <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6">Practice using the STAR method (Situation, Task, Action, Result) for behavioral questions. Reduce filler words like "um", "like", and "you know".</div>
+              <div style="margin-top:10px">
+                <div style="font-size:0.75rem;font-weight:600;color:var(--text-muted);margin-bottom:4px">Resources</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span class="badge-hm badge-accent">STAR Method</span>
+                  <span class="badge-hm badge-purple">Communication Skills</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="reco-card purple">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--purple);margin-bottom:8px">Technical Skills</div>
+              <div style="font-size:0.9rem;font-weight:700;margin-bottom:6px">Advanced JavaScript & APIs</div>
+              <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6">Revise advanced JavaScript concepts (closures, promises, async/await), Flask REST API design patterns, and MongoDB aggregation pipeline.</div>
+              <div style="margin-top:10px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span class="badge-hm badge-purple">JavaScript</span>
+                  <span class="badge-hm badge-accent">Flask</span>
+                  <span class="badge-hm badge-success">MongoDB</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="reco-card success">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--success);margin-bottom:8px">Project Explanation</div>
+              <div style="font-size:0.9rem;font-weight:700;margin-bottom:6px">Architecture & Scalability</div>
+              <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6">Practice explaining your SmartStudy AI project with system design perspective — architecture diagram, tech decisions, bottlenecks, and how you'd scale it.</div>
+              <div style="margin-top:10px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span class="badge-hm badge-success">System Design</span>
+                  <span class="badge-hm badge-navy">Architecture</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="reco-card warning">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--warning);margin-bottom:8px">Role Preparation</div>
+              <div style="font-size:0.9rem;font-weight:700;margin-bottom:6px">System Design Fundamentals</div>
+              <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6">Strengthen system design knowledge — load balancing, caching strategies, database sharding, microservices, and API rate limiting.</div>
+              <div style="margin-top:10px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <span class="badge-hm badge-warning">Load Balancing</span>
+                  <span class="badge-hm badge-warning">Caching</span>
+                  <span class="badge-hm badge-warning">Microservices</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Career Report Tab -->
+        <div class="tab-content" id="tab-career">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="card-hm">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                <div>
+                  <div class="card-title">Recommended Primary Role</div>
+                  <div style="font-size:1.1rem;font-weight:800;color:var(--primary)">Full Stack Developer</div>
+                </div>
+                <div style="text-align:center">
+                  <div style="font-size:2rem;font-weight:800;color:var(--accent)">92%</div>
+                  <div style="font-size:0.72rem;color:var(--text-muted)">Match</div>
+                </div>
+              </div>
+              <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;margin-bottom:16px">
+                Based on your skills, projects, and interview performance, <strong>Full Stack Developer</strong> is your strongest role match. Your Python, Flask, JavaScript, and MongoDB skills align well with full-stack requirements.
+              </div>
+              <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:8px">Other Potential Roles</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="flex:1;font-size:0.82rem;color:var(--text-secondary)">Python Backend Developer</div>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-hm" style="width:80px"><div class="progress-bar-hm purple" style="width:87%"></div></div>
+                    <span style="font-size:0.78rem;font-weight:700;color:var(--purple)">87%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="flex:1;font-size:0.82rem;color:var(--text-secondary)">Web Developer</div>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-hm" style="width:80px"><div class="progress-bar-hm success" style="width:78%"></div></div>
+                    <span style="font-size:0.78rem;font-weight:700;color:var(--success)">78%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="flex:1;font-size:0.82rem;color:var(--text-secondary)">Software Developer</div>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="progress-hm" style="width:80px"><div class="progress-bar-hm" style="width:72%"></div></div>
+                    <span style="font-size:0.78rem;font-weight:700;color:var(--accent)">72%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:14px">Strongest Skills</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+                <span class="skill-tag">Python</span>
+                <span class="skill-tag">Flask</span>
+                <span class="skill-tag purple">MongoDB</span>
+                <span class="skill-tag success">REST API</span>
+                <span class="skill-tag">JavaScript</span>
+                <span class="skill-tag purple">HTML/CSS</span>
+              </div>
+
+              <div class="card-title" style="margin-bottom:10px">Skills Needing Improvement</div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+                  <i class="bi bi-dash-circle-fill" style="color:var(--warning)"></i>
+                  <span>System Design fundamentals</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+                  <i class="bi bi-dash-circle-fill" style="color:var(--warning)"></i>
+                  <span>Cloud platforms (AWS/GCP)</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+                  <i class="bi bi-dash-circle-fill" style="color:var(--warning)"></i>
+                  <span>Testing frameworks (pytest, Jest)</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:0.8rem">
+                  <i class="bi bi-dash-circle-fill" style="color:var(--warning)"></i>
+                  <span>Docker & containerization</span>
+                </div>
+              </div>
+
+              <div class="card-title" style="margin-bottom:10px">Recommended Topics to Study</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                <span class="badge-hm badge-navy">System Design</span>
+                <span class="badge-hm badge-accent">Docker</span>
+                <span class="badge-hm badge-purple">AWS Basics</span>
+                <span class="badge-hm badge-success">Unit Testing</span>
+                <span class="badge-hm badge-navy">DSA</span>
+                <span class="badge-hm badge-accent">TypeScript</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Day Plan Tab -->
+        <div class="tab-content" id="tab-plan">
+          <div class="card-hm" style="margin-bottom:16px;background:linear-gradient(135deg,var(--accent-light),var(--purple-light));border-color:rgba(37,99,235,0.2)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <i class="bi bi-calendar-check-fill" style="color:var(--accent);font-size:1.5rem"></i>
+              <div>
+                <div style="font-size:0.9rem;font-weight:700;color:var(--primary)">Your Personalized 7-Day Improvement Plan</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary)">Based on your interview performance and identified improvement areas</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="day-plan-card">
+              <div class="day-badge">Day 1</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Communication & STAR Method</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Practice 5 behavioral questions using STAR. Record yourself and review. Focus on eliminating filler words.</div>
+              </div>
+            </div>
+
+            <div class="day-plan-card">
+              <div class="day-badge" style="background:var(--purple)">Day 2</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Advanced JavaScript</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Study closures, promises, async/await, event loop. Complete 3 JS coding challenges on LeetCode.</div>
+              </div>
+            </div>
+
+            <div class="day-plan-card">
+              <div class="day-badge" style="background:var(--success)">Day 3</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Flask & REST API Deep Dive</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Review REST principles, HTTP methods, authentication (JWT), error handling, and API versioning in Flask.</div>
+              </div>
+            </div>
+
+            <div class="day-plan-card">
+              <div class="day-badge" style="background:var(--warning)">Day 4</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Database & System Design</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Study SQL vs NoSQL trade-offs, MongoDB aggregation, and basic system design patterns (caching, load balancing).</div>
+              </div>
+            </div>
+
+            <div class="day-plan-card">
+              <div class="day-badge" style="background:var(--info)">Day 5</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Project Architecture Practice</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Draw system architecture for SmartStudy AI. Practice explaining tech decisions in 2 minutes. Focus on scalability.</div>
+              </div>
+            </div>
+
+            <div class="day-plan-card">
+              <div class="day-badge">Day 6</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Mock Interview Practice</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Take a full 30-minute InterviAI mock interview. Use insights from this report to improve weak areas.</div>
+              </div>
+            </div>
+
+            <div class="day-plan-card" style="grid-column:1/-1;border-color:var(--accent);background:var(--accent-light)">
+              <div class="day-badge" style="background:var(--accent)">Day 7</div>
+              <div>
+                <div style="font-size:0.85rem;font-weight:700;margin-bottom:4px">Final Review & Confidence Building</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5">Review all 5 days' material. Practice top 10 Full Stack interview questions. Do one final InterviAI session and compare scores.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="mobile-nav-placeholder"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../js/storage.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tab));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      App.init({ topbarTitle: 'Interview Report', activePage: 'report' });
+
+      const report = Storage.getLastReport() || {
+        date: new Date().toISOString(),
+        role: 'Full Stack Developer',
+        type: 'technical',
+        duration: '18 min',
+        questionsAnswered: 10,
+        totalQuestions: 10,
+        score: 78,
+        metrics: { 'Technical': 82, 'Communication': 68, 'Problem Solving': 81, 'Role Knowledge': 79, 'Answer Quality': 85, 'Project Knowledge': 80 },
+        tabSwitches: 0,
+        suspiciousEvents: 1
+      };
+
+      // Meta
+      document.getElementById('report-meta').textContent =
+        `${report.role} • ${(report.type||'').charAt(0).toUpperCase() + (report.type||'').slice(1)} Interview • ${Utils.formatDate(report.date)}`;
+      document.getElementById('q-answered').textContent = `${report.questionsAnswered || report.totalQuestions}/${report.totalQuestions}`;
+      document.getElementById('r-duration').textContent = report.duration;
+      document.getElementById('r-tabs').textContent = report.tabSwitches || 0;
+      document.getElementById('r-date').textContent = Utils.formatDate(report.date);
+
+      // Score animation
+      const score = report.score || 78;
+      Utils.animateCounter(document.getElementById('main-score-num'), 0, score, 1500);
+
+      setTimeout(() => {
+        const ring = document.getElementById('score-ring-stroke');
+        const circumference = 364;
+        if (ring) ring.style.strokeDashoffset = circumference - (score / 100) * circumference;
+      }, 200);
+
+      // Score color and verdict
+      const scoreRing = document.getElementById('score-ring-stroke');
+      const verdict = document.getElementById('score-verdict');
+      if (score >= 80) {
+        if (scoreRing) scoreRing.setAttribute('stroke', '#059669');
+        if (verdict) { verdict.style.background = 'var(--success-light)'; verdict.style.color = 'var(--success)'; verdict.textContent = 'Excellent Performance'; }
+      } else if (score >= 65) {
+        if (scoreRing) scoreRing.setAttribute('stroke', '#2563eb');
+        if (verdict) verdict.textContent = 'Good Performance';
+      } else {
+        if (scoreRing) scoreRing.setAttribute('stroke', '#d97706');
+        if (verdict) { verdict.style.background = 'var(--warning-light)'; verdict.style.color = 'var(--warning)'; verdict.textContent = 'Needs Improvement'; }
+      }
+
+      // Metrics bars
+      const metricsBars = document.getElementById('metrics-bars');
+      const colors = ['accent', 'purple', 'success', 'warning', '', 'purple'];
+      Object.entries(report.metrics).forEach(([name, val], i) => {
+        const div = document.createElement('div');
+        div.className = 'metric-bar-item';
+        div.innerHTML = `
+          <div class="metric-bar-top">
+            <span class="metric-name">${name}</span>
+            <span class="metric-score-val">${val}/100</span>
+          </div>
+          <div class="progress-hm">
+            <div class="progress-bar-hm ${colors[i] || 'accent'}" data-width="${val}" style="width:0%"></div>
+          </div>
+        `;
+        metricsBars.appendChild(div);
+      });
+
+      setTimeout(() => {
+        document.querySelectorAll('.progress-bar-hm[data-width]').forEach(bar => {
+          Utils.animateProgressBar(bar, parseInt(bar.dataset.width));
+        });
+      }, 400);
+
+      // Radar Chart
+      const canvas = document.getElementById('metrics-radar');
+      if (canvas && typeof Chart !== 'undefined') {
+        new Chart(canvas, {
+          type: 'radar',
+          data: {
+            labels: Object.keys(report.metrics),
+            datasets: [{
+              data: Object.values(report.metrics),
+              backgroundColor: 'rgba(37,99,235,0.1)',
+              borderColor: '#2563eb',
+              pointBackgroundColor: '#2563eb',
+              pointBorderColor: 'white',
+              pointBorderWidth: 2,
+              pointRadius: 3,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: 'rgba(0,0,0,0.06)' }, pointLabels: { font: { size: 9 }, color: '#475569' } } }
+          }
+        });
+      }
+
+      // Strengths
+      const strengthsList = document.getElementById('strengths-list');
+      const strengths = [
+        'Strong technical accuracy in Python and Flask questions',
+        'Good problem-solving approach with structured answers',
+        'Excellent project knowledge for SmartStudy AI',
+        'Professional communication and clarity',
+        'High answer quality score (85/100)'
+      ];
+      strengthsList.innerHTML = strengths.map(s => `
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:0.9rem;flex-shrink:0;margin-top:2px"></i>
+          <span style="font-size:0.82rem;color:var(--text-secondary)">${s}</span>
+        </div>
+      `).join('');
+
+      // Improvements
+      const improvsList = document.getElementById('improvements-list');
+      const improvs = [
+        'Communication score (68/100) — Practice STAR method',
+        'Include practical examples in technical answers',
+        'Strengthen system design and scalability concepts',
+        'Mention OWASP security best practices',
+        'Add more specifics when explaining architecture decisions'
+      ];
+      improvsList.innerHTML = improvs.map(s => `
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <i class="bi bi-arrow-up-circle-fill" style="color:var(--warning);font-size:0.9rem;flex-shrink:0;margin-top:2px"></i>
+          <span style="font-size:0.82rem;color:var(--text-secondary)">${s}</span>
+        </div>
+      `).join('');
+
+      // Question breakdown
+      const qBreakdown = document.getElementById('question-breakdown');
+      const questions = [
+        { q: "Tell me about yourself and your journey into full stack development.", s: 85 },
+        { q: "Explain your SmartStudy AI project architecture.", s: 82 },
+        { q: "Why did you choose MongoDB over a relational database?", s: 80 },
+        { q: "Explain SQL vs NoSQL. When would you choose each?", s: 84 },
+        { q: "How would you scale your application to 10,000 users?", s: 76 },
+        { q: "Explain REST API principles and your Flask implementation.", s: 82 },
+        { q: "Synchronous vs asynchronous programming concepts.", s: 75 },
+        { q: "Describe a challenging bug you fixed.", s: 80 },
+        { q: "How do you ensure security in web applications?", s: 77 },
+        { q: "Where do you see yourself in 2 years?", s: 83 }
+      ].slice(0, report.totalQuestions || 10);
+
+      qBreakdown.innerHTML = questions.map((item, i) => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:var(--radius);border:1px solid var(--border-light)">
+          <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);width:20px;text-align:center;flex-shrink:0">Q${i+1}</div>
+          <div style="flex:1;font-size:0.8rem;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${item.q}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <div class="progress-hm" style="width:60px"><div class="progress-bar-hm ${item.s >= 80 ? 'success' : item.s >= 65 ? 'accent' : 'warning'}" style="width:${item.s}%"></div></div>
+            <span class="score-chip ${Utils.getScoreClass(item.s)}" style="font-size:0.72rem">${item.s}</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Responsive
+      const topGrid = document.querySelector('.report-top-grid');
+      if (topGrid && window.innerWidth < 1024) topGrid.style.gridTemplateColumns = '1fr';
+
+      document.querySelectorAll('.grid-2-col').forEach(g => {
+        if (window.innerWidth < 768) g.style.gridTemplateColumns = '1fr';
+      });
+    });
+  </script>
+</body>
+</html>

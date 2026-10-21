@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Check — InterviAI</title>
+  <meta name="description" content="Test your camera, microphone, and browser before starting your AI mock interview.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .mic-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 32px;
+    }
+    .mic-bar-item {
+      width: 4px;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: height 0.1s ease;
+      min-height: 3px;
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.82rem;
+    }
+    .check-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-content">
+      <div id="topbar-placeholder"></div>
+
+      <main class="page-content">
+        <!-- Stepper -->
+        <div class="stepper" style="margin-bottom:24px">
+          <div class="step-item completed"><div class="step-num"><i class="bi bi-check-lg"></i></div><div class="step-label">Upload</div></div>
+          <div class="step-item completed"><div class="step-num"><i class="bi bi-check-lg"></i></div><div class="step-label">AI Analysis</div></div>
+          <div class="step-item completed"><div class="step-num"><i class="bi bi-check-lg"></i></div><div class="step-label">Configure</div></div>
+          <div class="step-item active"><div class="step-num" aria-current="step">4</div><div class="step-label">Device Check</div></div>
+          <div class="step-item"><div class="step-num">5</div><div class="step-label">Interview</div></div>
+          <div class="step-item"><div class="step-num">6</div><div class="step-label">Report</div></div>
+        </div>
+
+        <div class="page-header">
+          <h1>Device & Environment Check</h1>
+          <p>Ensure your camera, microphone, and browser are ready before starting the interview.</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px" class="device-grid">
+
+          <!-- Camera Card -->
+          <div class="device-card" id="camera-card">
+            <div class="device-icon" style="background:var(--accent-light);color:var(--accent)">
+              <i class="bi bi-camera-video-fill"></i>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:0.9rem;font-weight:700">Camera</div>
+                <i class="bi bi-hourglass-split device-status-icon pending" id="camera-status-icon"></i>
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px" id="camera-status-text">Click "Test Camera" to check</div>
+
+              <!-- Video Preview -->
+              <div id="camera-preview" style="display:none;border-radius:var(--radius);overflow:hidden;background:#0f172a;width:100%;aspect-ratio:16/9;position:relative;margin-bottom:10px">
+                <video id="camera-video" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover" aria-label="Camera preview"></video>
+                <div style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,0.6);color:white;font-size:0.65rem;padding:2px 8px;border-radius:10px;display:flex;align-items:center;gap:4px">
+                  <div class="status-dot active pulse"></div> Live Preview
+                </div>
+              </div>
+
+              <div id="camera-error" style="display:none;padding:10px;background:var(--danger-light);border-radius:var(--radius);font-size:0.78rem;color:var(--danger);margin-bottom:10px">
+                <i class="bi bi-exclamation-triangle-fill"></i> Camera access denied. Please allow camera in browser settings and refresh.
+              </div>
+
+              <button class="btn-hm btn-outline btn-sm" id="camera-btn" onclick="DeviceCheck.testCamera()">
+                <i class="bi bi-camera-video"></i> Test Camera
+              </button>
+            </div>
+          </div>
+
+          <!-- Microphone Card -->
+          <div class="device-card" id="mic-card">
+            <div class="device-icon" style="background:var(--purple-light);color:var(--purple)">
+              <i class="bi bi-mic-fill"></i>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:0.9rem;font-weight:700">Microphone</div>
+                <i class="bi bi-hourglass-split device-status-icon pending" id="mic-status-icon"></i>
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px" id="mic-status-text">Click "Test Mic" to check</div>
+
+              <!-- Mic Level -->
+              <div id="mic-level-wrap" style="display:none;margin-bottom:10px">
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px">Input Level</div>
+                <div class="mic-bar" id="mic-bars" aria-label="Microphone input level">
+                  <!-- Bars generated by JS -->
+                </div>
+              </div>
+
+              <div id="mic-error" style="display:none;padding:10px;background:var(--danger-light);border-radius:var(--radius);font-size:0.78rem;color:var(--danger);margin-bottom:10px">
+                <i class="bi bi-exclamation-triangle-fill"></i> Microphone access denied. Please allow microphone access and refresh.
+              </div>
+
+              <button class="btn-hm btn-outline btn-sm" id="mic-btn" onclick="DeviceCheck.testMic()" style="border-color:var(--purple);color:var(--purple)">
+                <i class="bi bi-mic"></i> Test Microphone
+              </button>
+            </div>
+          </div>
+
+          <!-- Browser Card -->
+          <div class="device-card ready" id="browser-card">
+            <div class="device-icon" style="background:var(--success-light);color:var(--success)">
+              <i class="bi bi-browser-chrome"></i>
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-size:0.9rem;font-weight:700">Browser Compatibility</div>
+                <i class="bi bi-check-circle-fill device-status-icon ok"></i>
+              </div>
+              <div class="check-item">
+                <span>WebRTC Support</span>
+                <span class="badge-hm badge-success"><i class="bi bi-check-lg"></i> Supported</span>
+              </div>
+              <div class="check-item">
+                <span>Speech Synthesis</span>
+                <span id="speech-synth-status" class="badge-hm badge-success"><i class="bi bi-check-lg"></i> Available</span>
+              </div>
+              <div class="check-item">
+                <span>Speech Recognition</span>
+                <span id="speech-recog-status" class="badge-hm badge-warning"><i class="bi bi-exclamation-triangle"></i> Checking...</span>
+              </div>
+              <div class="check-item" style="border:none">
+                <span>MediaRecorder API</span>
+                <span id="media-rec-status" class="badge-hm badge-success"><i class="bi bi-check-lg"></i> Available</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fullscreen & Network Card -->
+          <div class="device-card" id="fullscreen-card">
+            <div class="device-icon" style="background:var(--warning-light);color:var(--warning)">
+              <i class="bi bi-fullscreen"></i>
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="font-size:0.9rem;font-weight:700">Environment</div>
+                <i class="bi bi-hourglass-split device-status-icon pending" id="fs-status-icon"></i>
+              </div>
+
+              <div class="check-item">
+                <span>Fullscreen Mode</span>
+                <span id="fs-badge" class="badge-hm badge-gray">Not tested</span>
+              </div>
+              <div class="check-item">
+                <span>Network Status</span>
+                <span class="badge-hm badge-success"><i class="bi bi-wifi"></i> Connected (Demo)</span>
+              </div>
+              <div class="check-item" style="border:none">
+                <span>Screen Resolution</span>
+                <span id="resolution-badge" class="badge-hm badge-navy">...</span>
+              </div>
+
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <button class="btn-hm btn-outline btn-sm" id="fs-btn" onclick="DeviceCheck.testFullscreen()" style="border-color:var(--warning);color:var(--warning)">
+                  <i class="bi bi-fullscreen"></i> Test Fullscreen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overall Status -->
+        <div class="card-hm" style="margin-bottom:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:0.9rem;font-weight:700;margin-bottom:4px" id="readiness-title">System Check in Progress</div>
+              <div style="font-size:0.82rem;color:var(--text-muted)" id="readiness-desc">Testing camera and microphone...</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div id="readiness-indicator" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:var(--warning-light);color:var(--warning);font-size:0.8rem;font-weight:600">
+                <div class="status-dot warning pulse"></div>
+                <span id="readiness-label">Checking...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap">
+          <a href="configure.html" class="btn-hm btn-ghost">
+            <i class="bi bi-arrow-left"></i> Back to Configure
+          </a>
+          <div style="display:flex;gap:10px">
+            <button class="btn-hm btn-ghost" onclick="DeviceCheck.runAllChecks()" id="check-all-btn">
+              <i class="bi bi-arrow-repeat"></i> Run All Checks
+            </button>
+            <button class="btn-hm btn-primary btn-lg" id="start-interview-btn" onclick="DeviceCheck.startInterview()">
+              <i class="bi bi-camera-video-fill"></i> Start Interview
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="mobile-nav-placeholder"></div>
+
+  <script src="../js/storage.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const DeviceCheck = (() => {
+      let cameraStream = null;
+      let micStream = null;
+      let micAnalyser = null;
+      let micAnimFrame = null;
+      const status = { camera: false, mic: false, browser: true, fullscreen: false };
+
+      async function testCamera() {
+        const btn = document.getElementById('camera-btn');
+        const statusIcon = document.getElementById('camera-status-icon');
+        const statusText = document.getElementById('camera-status-text');
+        const preview = document.getElementById('camera-preview');
+        const errorEl = document.getElementById('camera-error');
+        const card = document.getElementById('camera-card');
+
+        Utils.setButtonLoading(btn, true, 'Testing...');
+        statusText.textContent = 'Requesting camera access...';
+
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          const video = document.getElementById('camera-video');
+          video.srcObject = cameraStream;
+
+          preview.style.display = 'block';
+          errorEl.style.display = 'none';
+          statusIcon.className = 'bi bi-check-circle-fill device-status-icon ok';
+          statusText.textContent = 'Camera is working ✓';
+          card.className = 'device-card ready';
+          status.camera = true;
+          Utils.setButtonLoading(btn, false);
+          btn.innerHTML = '<i class="bi bi-camera-video-fill"></i> Camera Active';
+          btn.className = 'btn-hm btn-success btn-sm';
+          updateReadiness();
+        } catch (err) {
+          preview.style.display = 'none';
+          errorEl.style.display = 'block';
+          statusIcon.className = 'bi bi-x-circle-fill device-status-icon error';
+          statusText.textContent = 'Camera access denied';
+          card.className = 'device-card error-state';
+          Utils.setButtonLoading(btn, false);
+          Utils.showWarning('Camera Unavailable', 'Interview will proceed without camera monitoring.');
+          status.camera = false;
+          updateReadiness();
+        }
+      }
+
+      async function testMic() {
+        const btn = document.getElementById('mic-btn');
+        const statusIcon = document.getElementById('mic-status-icon');
+        const statusText = document.getElementById('mic-status-text');
+        const levelWrap = document.getElementById('mic-level-wrap');
+        const errorEl = document.getElementById('mic-error');
+        const card = document.getElementById('mic-card');
+        const barsEl = document.getElementById('mic-bars');
+
+        Utils.setButtonLoading(btn, true, 'Testing...');
+
+        // Generate bars
+        barsEl.innerHTML = Array.from({length: 16}, () => '<div class="mic-bar-item" style="height:4px"></div>').join('');
+
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const source = ctx.createMediaStreamSource(micStream);
+          micAnalyser = ctx.createAnalyser();
+          micAnalyser.fftSize = 64;
+          source.connect(micAnalyser);
+
+          levelWrap.style.display = 'block';
+          errorEl.style.display = 'none';
+          statusIcon.className = 'bi bi-check-circle-fill device-status-icon ok';
+          statusText.textContent = 'Microphone is working ✓';
+          card.className = 'device-card ready';
+          status.mic = true;
+          Utils.setButtonLoading(btn, false);
+          btn.innerHTML = '<i class="bi bi-mic-fill"></i> Mic Active';
+          btn.className = 'btn-hm btn-success btn-sm';
+
+          // Animate bars
+          function updateBars() {
+            const data = new Uint8Array(micAnalyser.frequencyBinCount);
+            micAnalyser.getByteFrequencyData(data);
+            const bars = barsEl.querySelectorAll('.mic-bar-item');
+            bars.forEach((bar, i) => {
+              const height = Math.max(3, (data[i] / 255) * 30);
+              bar.style.height = height + 'px';
+            });
+            micAnimFrame = requestAnimationFrame(updateBars);
+          }
+          updateBars();
+          updateReadiness();
+        } catch (err) {
+          errorEl.style.display = 'block';
+          statusIcon.className = 'bi bi-x-circle-fill device-status-icon error';
+          statusText.textContent = 'Microphone access denied';
+          card.className = 'device-card error-state';
+          Utils.setButtonLoading(btn, false);
+          Utils.showWarning('Microphone Unavailable', 'You can type answers instead during the interview.');
+          status.mic = false;
+          updateReadiness();
+        }
+      }
+
+      function testFullscreen() {
+        const btn = document.getElementById('fs-btn');
+        const badge = document.getElementById('fs-badge');
+        const icon = document.getElementById('fs-status-icon');
+
+        try {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+            badge.className = 'badge-hm badge-success';
+            badge.innerHTML = '<i class="bi bi-check-lg"></i> Fullscreen Active';
+            icon.className = 'bi bi-check-circle-fill device-status-icon ok';
+            status.fullscreen = true;
+            btn.innerHTML = '<i class="bi bi-fullscreen-exit"></i> Exit Fullscreen';
+            btn.onclick = () => { document.exitFullscreen && document.exitFullscreen(); };
+            updateReadiness();
+          } else {
+            badge.className = 'badge-hm badge-warning';
+            badge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Not supported';
+          }
+        } catch(e) {
+          badge.className = 'badge-hm badge-warning';
+          badge.innerHTML = 'Could not enter fullscreen';
+        }
+      }
+
+      function runAllChecks() {
+        testCamera();
+        setTimeout(() => testMic(), 800);
+        checkBrowserAPIs();
+        updateResolution();
+      }
+
+      function checkBrowserAPIs() {
+        // Speech Synthesis
+        const synthBadge = document.getElementById('speech-synth-status');
+        if ('speechSynthesis' in window) {
+          synthBadge.className = 'badge-hm badge-success';
+          synthBadge.innerHTML = '<i class="bi bi-check-lg"></i> Available';
+        } else {
+          synthBadge.className = 'badge-hm badge-warning';
+          synthBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Unavailable';
+        }
+
+        // Speech Recognition
+        const recogBadge = document.getElementById('speech-recog-status');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+          recogBadge.className = 'badge-hm badge-success';
+          recogBadge.innerHTML = '<i class="bi bi-check-lg"></i> Available';
+        } else {
+          recogBadge.className = 'badge-hm badge-warning';
+          recogBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Text mode';
+        }
+
+        // MediaRecorder
+        const recBadge = document.getElementById('media-rec-status');
+        if ('MediaRecorder' in window) {
+          recBadge.className = 'badge-hm badge-success';
+          recBadge.innerHTML = '<i class="bi bi-check-lg"></i> Available';
+        } else {
+          recBadge.className = 'badge-hm badge-warning';
+          recBadge.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Limited';
+        }
+      }
+
+      function updateResolution() {
+        const badge = document.getElementById('resolution-badge');
+        if (badge) badge.textContent = `${screen.width} × ${screen.height}`;
+      }
+
+      function updateReadiness() {
+        const titleEl = document.getElementById('readiness-title');
+        const descEl = document.getElementById('readiness-desc');
+        const indicator = document.getElementById('readiness-indicator');
+        const label = document.getElementById('readiness-label');
+
+        if (status.camera && status.mic) {
+          titleEl.textContent = '✓ System Ready for Interview';
+          descEl.textContent = 'Camera, microphone, and browser checks passed. You\'re ready to start.';
+          indicator.style.background = 'var(--success-light)';
+          indicator.style.color = 'var(--success)';
+          indicator.querySelector('.status-dot').className = 'status-dot active pulse';
+          label.textContent = 'All Systems Ready';
+        } else if (status.camera || status.mic) {
+          titleEl.textContent = '⚠ Partial System Ready';
+          descEl.textContent = 'Some components could not be verified. You can still proceed — interview will adapt to available capabilities.';
+          indicator.style.background = 'var(--warning-light)';
+          indicator.style.color = 'var(--warning)';
+          label.textContent = 'Partially Ready';
+        }
+      }
+
+      function startInterview() {
+        // Stop streams
+        if (micAnimFrame) cancelAnimationFrame(micAnimFrame);
+        if (micStream) micStream.getTracks().forEach(t => t.stop());
+        // Don't stop camera stream - interview page will use it
+
+        Utils.showSuccess('Starting Interview', 'Entering interview mode...');
+        setTimeout(() => Utils.navigate('interview.html'), 700);
+      }
+
+      return { testCamera, testMic, testFullscreen, runAllChecks, startInterview };
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      App.init({ topbarTitle: 'Device Check', activePage: 'device-check' });
+
+      // Responsive grid
+      const grid = document.querySelector('.device-grid');
+      if (grid && window.innerWidth < 768) grid.style.gridTemplateColumns = '1fr';
+
+      // Auto run some checks
+      setTimeout(() => {
+        DeviceCheck.checkBrowserAPIs && DeviceCheck.checkBrowserAPIs?.();
+        DeviceCheck.updateResolution && DeviceCheck.updateResolution?.();
+      }, 300);
+
+      // Set resolution
+      const badge = document.getElementById('resolution-badge');
+      if (badge) badge.textContent = `${screen.width} × ${screen.height}`;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ride Requests — Campus Rides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:0.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-motorcycle" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div><h2>Campus Rides</h2><p>Smart ride sharing</p></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="name">{{ current_user_name }}</div>
+      <div class="role-badge role-driver"><i class="fa-solid fa-motorcycle"></i> Driver</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"     class="nav-item"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a href="/find-ride"     class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> <span>Find a Ride</span></a>
+      <a href="/offer-ride"    class="nav-item"><i class="fa-solid fa-plus"></i> <span>Offer Ride</span></a>
+      <a href="/ride-requests" class="nav-item active">
+        <i class="fa-solid fa-clipboard-list"></i> <span>Ride Requests</span>
+        {% if requests %}<span class="nav-badge">{{ requests|length }}</span>{% endif %}
+      </a>
+      <a href="/profile" class="nav-item"><i class="fa-solid fa-user"></i> <span>My Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/logout" class="nav-item" style="color:#f87171"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mobile-header">
+      <button class="hamburger" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <span style="font-weight:800;"><i class="fa-solid fa-clipboard-list" style="color:#a78bfa;"></i> Requests</span>
+      <span></span>
+    </div>
+
+    <div class="page-body">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <h1><i class="fa-solid fa-clipboard-list" style="color:#a78bfa;"></i> Ride Requests</h1>
+          <p>Accept or reject passenger requests in real-time</p>
+        </div>
+        <button onclick="location.reload()" class="btn btn-outline btn-sm"><i class="fa-solid fa-rotate"></i> Refresh</button>
+      </div>
+
+      <!-- Real-time Popup -->
+      <div id="new-req-popup" class="new-req-popup">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+          <i class="fa-solid fa-bell" style="font-size:1.5rem;color:#fde68a;"></i>
+          <div>
+            <div style="font-weight:800;font-size:0.95rem;" id="new-req-name">New Request!</div>
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);" id="new-req-info"></div>
+          </div>
+        </div>
+        <button onclick="location.reload()" class="btn btn-primary btn-sm btn-full">
+          <i class="fa-solid fa-eye"></i> View Now
+        </button>
+      </div>
+
+      {% if requests %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;" id="requests-grid">
+          {% for req in requests %}
+          <div class="card" id="req-card-{{ req.request_id }}" style="border-color:rgba(124,58,237,0.2);">
+            <!-- Passenger Header -->
+            <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:1rem;padding-bottom:0.85rem;border-bottom:1px solid rgba(255,255,255,0.08);">
+              <div class="avatar"><i class="fa-solid fa-user" style="font-size:1.1rem;"></i></div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:1rem;">{{ req.passenger_name }}</div>
+                {% if req.passenger_phone %}
+                <a href="tel:{{ req.passenger_phone }}" style="font-size:0.8rem;color:#67e8f9;text-decoration:none;">
+                  <i class="fa-solid fa-phone"></i> {{ req.passenger_phone }}
+                </a>
+                {% endif %}
+              </div>
+              <span style="padding:0.25rem 0.65rem;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);border-radius:9999px;font-size:0.72rem;font-weight:700;color:#fde68a;">
+                <i class="fa-solid fa-hourglass-half"></i> Pending
+              </span>
+            </div>
+
+            <!-- Route Details -->
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;">
+              <div style="font-size:0.85rem;display:flex;gap:0.75rem;align-items:flex-start;">
+                <i class="fa-solid fa-location-dot" style="color:#a78bfa;margin-top:0.1rem;width:16px;flex-shrink:0;"></i>
+                <span><span style="color:rgba(255,255,255,0.5);font-size:0.75rem;">From</span><br/>{{ req.start_location }}</span>
+              </div>
+              <div style="font-size:0.85rem;display:flex;gap:0.75rem;align-items:flex-start;">
+                <i class="fa-solid fa-flag-checkered" style="color:#86efac;margin-top:0.1rem;width:16px;flex-shrink:0;"></i>
+                <span><span style="color:rgba(255,255,255,0.5);font-size:0.75rem;">To</span><br/>{{ req.destination }}</span>
+              </div>
+              <div style="font-size:0.85rem;display:flex;gap:0.75rem;align-items:center;">
+                <i class="fa-regular fa-clock" style="color:rgba(255,255,255,0.4);width:16px;flex-shrink:0;"></i>
+                <span>{{ req.datetime_str }}</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            {% if req.status == 'pending' %}
+            <div style="display:flex;gap:0.65rem;">
+              <button onclick="acceptRide('{{ req.request_id }}', this)" class="btn btn-success" style="flex:1;" id="accept-{{ req.request_id }}">
+                <i class="fa-solid fa-circle-check"></i> Accept
+              </button>
+              <button onclick="rejectRide('{{ req.request_id }}', this)" class="btn btn-danger" style="flex:1;" id="reject-{{ req.request_id }}">
+                <i class="fa-solid fa-circle-xmark"></i> Reject
+              </button>
+            </div>
+            {% else %}
+            <button disabled class="btn btn-outline btn-full" style="opacity:0.5;cursor:not-allowed;">
+              <i class="fa-solid fa-circle-check"></i> Action Completed
+            </button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-solid fa-inbox" style="color:#a78bfa;"></i></div>
+          <h3>No Pending Requests</h3>
+          <p>New ride requests from passengers will appear here in real-time.</p>
+          <a href="/offer-ride" class="btn btn-primary" style="margin-top:1.25rem;"><i class="fa-solid fa-plus"></i> Offer a Ride</a>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="/dashboard"     class="bottom-nav-item"><span><i class="fa-solid fa-house"></i></span><span>Home</span></a>
+    <a href="/find-ride"     class="bottom-nav-item"><span><i class="fa-solid fa-magnifying-glass"></i></span><span>Find</span></a>
+    <a href="/offer-ride"    class="bottom-nav-item"><span><i class="fa-solid fa-plus"></i></span><span>Offer</span></a>
+    <a href="/ride-requests" class="bottom-nav-item active"><span><i class="fa-solid fa-clipboard-list"></i></span><span>Requests</span></a>
+    <a href="/profile"       class="bottom-nav-item"><span><i class="fa-solid fa-user"></i></span><span>Profile</span></a>
+  </div>
+</nav>
+
+<script>
+  const socket = io();
+  const userId = "{{ current_user_id }}";
+
+  socket.on('connect', () => { socket.emit('join_room', { room: userId }); });
+
+  socket.on('ride_request_alert', (data) => {
+    const popup = document.getElementById('new-req-popup');
+    document.getElementById('new-req-name').textContent = `New request from ${data.passenger_name}!`;
+    document.getElementById('new-req-info').textContent = `To: ${data.destination}`;
+    popup.classList.add('visible');
+    showToast('fa-bell','New Ride Request!',`${data.passenger_name} → ${data.destination}`,'warning');
+    setTimeout(() => popup.classList.remove('visible'), 10000);
+  });
+
+  async function acceptRide(reqId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    const rejBtn = document.getElementById(`reject-${reqId}`);
+    if (rejBtn) rejBtn.disabled = true;
+    const res  = await fetch(`/accept-ride/${reqId}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showToast('fa-circle-check','Accepted!', data.message,'success');
+      const card = document.getElementById(`req-card-${reqId}`);
+      if (card) {
+        card.style.borderColor = 'rgba(34,197,94,0.5)';
+        const actDiv = card.querySelector('[style*="display:flex;gap:0.65rem"]');
+        if (actDiv) actDiv.innerHTML = `<div class="btn btn-outline btn-full" style="opacity:1;cursor:default;color:#86efac;border-color:rgba(34,197,94,0.3);"><i class="fa-solid fa-circle-check"></i> Accepted — OTP sent to passenger</div>`;
+      }
+    } else {
+      showToast('fa-circle-xmark','Error', data.message,'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Accept';
+      if (rejBtn) rejBtn.disabled = false;
+    }
+  }
+
+  async function rejectRide(reqId, btn) {
+    if (!confirm('Reject this request? The passenger will be notified immediately.')) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    const accBtn = document.getElementById(`accept-${reqId}`);
+    if (accBtn) accBtn.disabled = true;
+    const res  = await fetch(`/reject-ride/${reqId}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showToast('fa-circle-xmark','Rejected','Passenger notified.','warning');
+      const card = document.getElementById(`req-card-${reqId}`);
+      if (card) {
+        card.style.borderColor = 'rgba(239,68,68,0.4)';
+        const actDiv = card.querySelector('[style*="display:flex;gap:0.65rem"]');
+        if (actDiv) actDiv.innerHTML = `<div class="btn btn-outline btn-full" style="opacity:1;cursor:default;color:#fca5a5;border-color:rgba(239,68,68,0.3);"><i class="fa-solid fa-circle-xmark"></i> Rejected — Passenger notified</div>`;
+      }
+    } else {
+      showToast('fa-circle-xmark','Error', data.message,'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Reject';
+      if (accBtn) accBtn.disabled = false;
+    }
+  }
+
+  function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+
+  function showToast(icon,title,msg,type='info') {
+    const c=document.getElementById('toast-container');
+    const el=document.createElement('div'); el.className=`toast toast-${type}`;
+    el.innerHTML=`<span class="toast-icon"><i class="fa-solid ${icon}"></i></span><div style="flex:1;min-width:0;"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    c.appendChild(el); setTimeout(()=>el.remove(),5500);
+  }
+</script>
+</body>
+</html>

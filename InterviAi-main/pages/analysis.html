@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Analysis — InterviAI</title>
+  <meta name="description" content="View AI-powered resume analysis results including role detection, skill extraction, and interview readiness.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-content">
+      <div id="topbar-placeholder"></div>
+
+      <main class="page-content">
+        <!-- Stepper -->
+        <div class="stepper" style="margin-bottom:24px">
+          <div class="step-item completed"><div class="step-num"><i class="bi bi-check-lg"></i></div><div class="step-label">Upload</div></div>
+          <div class="step-item active"><div class="step-num" aria-current="step">2</div><div class="step-label">AI Analysis</div></div>
+          <div class="step-item"><div class="step-num">3</div><div class="step-label">Configure</div></div>
+          <div class="step-item"><div class="step-num">4</div><div class="step-label">Device Check</div></div>
+          <div class="step-item"><div class="step-num">5</div><div class="step-label">Interview</div></div>
+          <div class="step-item"><div class="step-num">6</div><div class="step-label">Report</div></div>
+        </div>
+
+        <!-- Analysis Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">Resume Analysis Results</h1>
+            <p style="font-size:0.875rem;color:var(--text-secondary)">AI has analyzed your resume and prepared your interview plan</p>
+          </div>
+          <div style="display:flex;gap:10px">
+            <a href="upload.html" class="btn-hm btn-ghost btn-sm"><i class="bi bi-arrow-left"></i> Re-upload</a>
+            <a href="configure.html" class="btn-hm btn-primary" id="continue-btn">
+              Continue to Interview Setup <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px" class="analysis-layout">
+
+          <!-- Left Column -->
+          <div style="display:flex;flex-direction:column;gap:20px">
+
+            <!-- Candidate Overview -->
+            <div class="card-hm" id="candidate-card">
+              <div style="display:flex;align-items:center;gap:16px">
+                <div class="avatar avatar-xl" style="background:linear-gradient(135deg,var(--accent),var(--purple))" id="candidate-avatar">MS</div>
+                <div>
+                  <div style="font-size:1.1rem;font-weight:800;color:var(--primary)" id="candidate-name">Mohan Saini</div>
+                  <div style="font-size:0.85rem;color:var(--text-secondary)" id="candidate-email">mohan.saini@email.com</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <span class="badge-hm badge-navy"><i class="bi bi-phone"></i> <span id="candidate-phone">+91 98765 43210</span></span>
+                    <span class="badge-hm badge-navy"><i class="bi bi-geo-alt-fill"></i> <span id="candidate-location">New Delhi, India</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Primary Role Detection -->
+            <div class="card-hm" style="background:linear-gradient(135deg,var(--primary) 0%,#2a4d7a 100%)">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.5)">
+                  <i class="bi bi-bullseye"></i> AI Role Detection
+                </div>
+                <div style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);font-size:0.7rem;font-weight:600;padding:3px 10px;border-radius:20px">
+                  <i class="bi bi-cpu-fill"></i> Powered by AI
+                </div>
+              </div>
+
+              <div style="font-size:1.4rem;font-weight:800;color:white;margin-bottom:8px" id="primary-role">Full Stack Developer</div>
+
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <div style="flex:1;height:8px;background:rgba(255,255,255,0.15);border-radius:4px">
+                  <div id="confidence-bar" style="height:100%;width:92%;background:linear-gradient(90deg,#2563eb,#6366f1);border-radius:4px;transition:width 1s ease"></div>
+                </div>
+                <div style="font-size:1rem;font-weight:800;color:white" id="confidence-text">92%</div>
+                <div style="font-size:0.72rem;color:rgba(255,255,255,0.6)">Confidence</div>
+              </div>
+
+              <div style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em">Possible Role Matches</div>
+              <div id="possible-roles" style="display:flex;flex-direction:column;gap:8px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:14px">Detected Skills & Technologies</div>
+              <div id="skills-container" style="display:flex;flex-wrap:wrap;gap:8px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Projects -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:14px">Projects</div>
+              <div id="projects-container" style="display:flex;flex-direction:column;gap:14px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+
+            <!-- Confidence Card -->
+            <div class="card-hm" style="text-align:center;padding:24px">
+              <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:12px">AI Confidence</div>
+              <div class="score-ring-container">
+                <svg width="120" height="120" style="transform:rotate(-90deg)" role="img" aria-label="Confidence score">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" stroke-width="10"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#2563eb" stroke-width="10"
+                    stroke-dasharray="314" id="confidence-ring" stroke-dashoffset="314"
+                    stroke-linecap="round" style="transition:stroke-dashoffset 1.5s ease"/>
+                </svg>
+                <div class="score-ring-label">
+                  <span class="score-num" id="conf-score">92</span>
+                  <span class="score-sub">/ 100</span>
+                </div>
+              </div>
+              <div style="font-size:0.85rem;font-weight:700;color:var(--primary);margin-top:12px">High Match</div>
+              <div style="font-size:0.78rem;color:var(--text-muted)">Strong resume alignment</div>
+            </div>
+
+            <!-- Experience -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:12px">Experience</div>
+              <div id="experience-container">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Education -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:12px">Education</div>
+              <div id="education-container">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Strengths -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:12px">
+                <i class="bi bi-check-circle-fill" style="color:var(--success)"></i> Resume Strengths
+              </div>
+              <div id="strengths-container" style="display:flex;flex-direction:column;gap:8px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Missing info -->
+            <div class="card-hm">
+              <div class="card-title" style="margin-bottom:12px">
+                <i class="bi bi-exclamation-triangle-fill" style="color:var(--warning)"></i> Improvement Areas
+              </div>
+              <div id="missing-container" style="display:flex;flex-direction:column;gap:8px">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <a href="configure.html" class="btn-hm btn-primary" style="width:100%;justify-content:center;padding:13px">
+              <i class="bi bi-sliders"></i> Continue to Interview Setup
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="mobile-nav-placeholder"></div>
+
+  <script src="../js/storage.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      App.init({ topbarTitle: 'Resume Analysis', activePage: 'analysis' });
+
+      const resume = Storage.getResumeData();
+
+      // Candidate info
+      document.getElementById('candidate-name').textContent = resume.candidate.name;
+      document.getElementById('candidate-email').textContent = resume.candidate.email;
+      document.getElementById('candidate-phone').textContent = resume.candidate.phone;
+      document.getElementById('candidate-location').textContent = resume.candidate.location;
+      document.getElementById('candidate-avatar').textContent = Utils.getInitials(resume.candidate.name);
+
+      // Primary role
+      document.getElementById('primary-role').textContent = resume.primaryRole;
+      document.getElementById('confidence-text').textContent = resume.confidence + '%';
+      document.getElementById('conf-score').textContent = resume.confidence;
+
+      // Animate confidence ring
+      setTimeout(() => {
+        const ring = document.getElementById('confidence-ring');
+        const circumference = 314;
+        const offset = circumference - (resume.confidence / 100) * circumference;
+        if (ring) ring.style.strokeDashoffset = offset;
+
+        const bar = document.getElementById('confidence-bar');
+        if (bar) bar.style.width = resume.confidence + '%';
+      }, 300);
+
+      // Possible roles
+      const rolesEl = document.getElementById('possible-roles');
+      if (rolesEl) {
+        rolesEl.innerHTML = resume.detectedRoles.map((r, i) => `
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px">
+            <div style="font-size:0.82rem;font-weight:600;color:white;flex:1">${r.role}</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:60px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px">
+                <div style="height:100%;width:${r.match}%;background:${i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.4)'};border-radius:2px"></div>
+              </div>
+              <span style="font-size:0.78rem;font-weight:700;color:${i === 0 ? '#60a5fa' : 'rgba(255,255,255,0.5)'}">${r.match}%</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Skills
+      const skillsEl = document.getElementById('skills-container');
+      if (skillsEl) {
+        const colors = ['accent', 'purple', 'success', 'warning'];
+        skillsEl.innerHTML = resume.skills.map((s, i) => `<span class="skill-tag ${colors[i % colors.length]}">${s}</span>`).join('');
+      }
+
+      // Projects
+      const projectsEl = document.getElementById('projects-container');
+      if (projectsEl) {
+        projectsEl.innerHTML = resume.projects.map(p => `
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <i class="bi bi-folder-fill" style="color:var(--accent)"></i>
+              <span style="font-size:0.875rem;font-weight:700;color:var(--text-primary)">${p.name}</span>
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px">${p.desc}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              ${p.tech.split(',').map(t => `<span class="skill-tag" style="font-size:0.7rem;padding:2px 8px">${t.trim()}</span>`).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Experience
+      const expEl = document.getElementById('experience-container');
+      if (expEl) {
+        expEl.innerHTML = resume.experience.map(e => `
+          <div style="display:flex;gap:10px">
+            <div class="card-icon warning" style="width:36px;height:36px;font-size:0.9rem;flex-shrink:0"><i class="bi bi-briefcase-fill"></i></div>
+            <div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">${e.title}</div>
+              <div style="font-size:0.75rem;color:var(--accent)">${e.company}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted)">${e.duration}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Education
+      const eduEl = document.getElementById('education-container');
+      if (eduEl) {
+        eduEl.innerHTML = resume.education.map(e => `
+          <div style="display:flex;gap:10px">
+            <div class="card-icon primary" style="width:36px;height:36px;font-size:0.9rem;flex-shrink:0"><i class="bi bi-mortarboard-fill"></i></div>
+            <div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary)">${e.degree}</div>
+              <div style="font-size:0.75rem;color:var(--accent)">${e.institution}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted)">${e.year}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Strengths
+      const strengthsEl = document.getElementById('strengths-container');
+      if (strengthsEl) {
+        strengthsEl.innerHTML = resume.strengths.map(s => `
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:0.9rem;flex-shrink:0;margin-top:2px"></i>
+            <span style="font-size:0.82rem;color:var(--text-secondary)">${s}</span>
+          </div>
+        `).join('');
+      }
+
+      // Missing
+      const missingEl = document.getElementById('missing-container');
+      if (missingEl) {
+        missingEl.innerHTML = resume.missing.map(m => `
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <i class="bi bi-exclamation-circle-fill" style="color:var(--warning);font-size:0.9rem;flex-shrink:0;margin-top:2px"></i>
+            <span style="font-size:0.82rem;color:var(--text-secondary)">${m}</span>
+          </div>
+        `).join('');
+      }
+
+      // Responsive layout
+      const layout = document.querySelector('.analysis-layout');
+      if (layout && window.innerWidth < 1024) layout.style.gridTemplateColumns = '1fr';
+    });
+  </script>
+</body>
+</html>

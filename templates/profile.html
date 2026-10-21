@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile — Campus Rides</title>
+  <meta name="description" content="View and update your Campus Rides profile. Manage your ride history."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:0.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-motorcycle" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div><h2>Campus Rides</h2><p>Smart ride sharing</p></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="name">{{ current_user_name }}</div>
+      <div class="role-badge {% if current_user_role == 'driver' %}role-driver{% else %}role-passenger{% endif %}">
+        {% if current_user_role == 'driver' %}
+          <i class="fa-solid fa-motorcycle"></i> Driver
+        {% else %}
+          <i class="fa-solid fa-user"></i> Passenger
+        {% endif %}
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"    class="nav-item"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a href="/find-ride"    class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> <span>Find a Ride</span></a>
+      {% if current_user_role == 'driver' %}
+      <a href="/offer-ride"   class="nav-item"><i class="fa-solid fa-plus"></i> <span>Offer Ride</span></a>
+      <a href="/ride-requests" class="nav-item"><i class="fa-solid fa-clipboard-list"></i> <span>Ride Requests</span></a>
+      {% endif %}
+      <a href="/profile" class="nav-item active"><i class="fa-solid fa-circle-user"></i> <span>My Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/logout" class="nav-item" style="color:#f87171"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="mobile-header">
+      <button class="hamburger" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <span style="font-weight:800;"><i class="fa-solid fa-circle-user" style="color:#a78bfa;"></i> Profile</span>
+      <span></span>
+    </div>
+
+    <div class="page-body">
+      <div class="page-header">
+        <h1><i class="fa-solid fa-circle-user" style="color:#a78bfa;"></i> My Profile</h1>
+        <p>Manage your account and ride history</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <!-- Profile Hero -->
+      <div class="card" style="text-align:center;margin-bottom:1.25rem;padding:2rem;">
+        <div class="avatar avatar-lg" style="margin:0 auto 1rem;">
+          {% if user.vehicle_type == 'bike' %}
+            <i class="fa-solid fa-motorcycle" style="font-size:2rem;"></i>
+          {% elif user.vehicle_type == 'scooter' %}
+            <i class="fa-solid fa-bicycle" style="font-size:2rem;"></i>
+          {% else %}
+            <i class="fa-solid fa-circle-user" style="font-size:2rem;"></i>
+          {% endif %}
+        </div>
+        <h2 style="font-size:1.4rem;font-weight:900;">{{ user.name }}</h2>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.88rem;margin-top:0.25rem;">{{ user.email }}</p>
+        <div style="display:flex;justify-content:center;gap:0.6rem;margin-top:0.75rem;flex-wrap:wrap;">
+          <span class="history-badge {% if user.role == 'driver' %}badge-driver{% else %}badge-passenger{% endif %}">
+            {% if user.role == 'driver' %}
+              <i class="fa-solid fa-motorcycle"></i> Driver
+            {% else %}
+              <i class="fa-solid fa-user"></i> Passenger
+            {% endif %}
+          </span>
+          {% if user.department %}
+          <span class="history-badge" style="background:rgba(124,58,237,0.15);color:#c4b5fd;">
+            <i class="fa-solid fa-building-columns"></i> {{ user.department }}
+          </span>
+          {% endif %}
+          {% if user.phone %}
+          <span class="history-badge" style="background:rgba(6,182,212,0.15);color:#67e8f9;">
+            <i class="fa-solid fa-phone"></i> {{ user.phone }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Edit Profile -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="section-title"><i class="fa-solid fa-pen-to-square" style="color:#a78bfa;margin-right:0.4rem;"></i>Edit Profile</div>
+        <form method="POST" action="/update-profile">
+          <div class="grid2">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" name="name" value="{{ user.name }}" class="form-control" required/>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" value="{{ user.phone }}" maxlength="10" class="form-control" placeholder="10-digit number"/>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-group">
+              <label>Department</label>
+              <select name="department" class="form-control">
+                {% for dept in ['Computer Science','Information Technology','Electronics & Communication','Mechanical Engineering','Civil Engineering','MBA','BBA','Other'] %}
+                <option value="{{ dept }}" {% if user.department == dept %}selected{% endif %}>{{ dept }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Vehicle Type</label>
+              <select name="vehicle_type" class="form-control">
+                <option value="no_vehicle" {% if user.vehicle_type=='no_vehicle' %}selected{% endif %}>No Vehicle (Passenger)</option>
+                <option value="bike"       {% if user.vehicle_type=='bike'       %}selected{% endif %}>Bike / Motorcycle</option>
+                <option value="scooter"    {% if user.vehicle_type=='scooter'    %}selected{% endif %}>Scooter / Two-wheeler</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" style="padding:0.9rem;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- Ride History with Delete -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-clock-rotate-left" style="color:#a78bfa;margin-right:0.4rem;"></i>Ride History</div>
+          <button onclick="loadHistory()" class="btn btn-outline btn-sm"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+        <div id="history-container">
+          {% if history %}
+            <div style="display:flex;flex-direction:column;gap:0;">
+              {% for h in history %}
+              <div class="history-item" style="padding:0.85rem 0;border-bottom:1px solid rgba(255,255,255,0.06);" id="ph-{{ h._id }}">
+                <div style="display:flex;align-items:center;gap:0.85rem;flex:1;min-width:0;">
+                  <div class="avatar" style="font-size:1.1rem;width:38px;height:38px;">
+                    {% if h.driver_id == current_user_id %}
+                      <i class="fa-solid fa-motorcycle"></i>
+                    {% else %}
+                      <i class="fa-solid fa-user"></i>
+                    {% endif %}
+                  </div>
+                  <div class="history-route" style="min-width:0;">
+                    <div class="from" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                      <i class="fa-solid fa-location-dot" style="color:#a78bfa;font-size:0.75rem;"></i>
+                      {{ h.start_location }}
+                      <i class="fa-solid fa-arrow-right" style="opacity:0.4;font-size:0.7rem;margin:0 0.2rem;"></i>
+                      <i class="fa-solid fa-flag-checkered" style="color:#86efac;font-size:0.75rem;"></i>
+                      {{ h.destination }}
+                    </div>
+                    <div class="to">
+                      {{ h.start_time.strftime('%d %b %Y, %I:%M %p') if h.start_time else 'N/A' }}
+                      &nbsp;•&nbsp;
+                      {% if h.driver_id == current_user_id %}
+                      <span class="history-badge badge-driver">Driver</span>
+                      {% else %}
+                      <span class="history-badge badge-passenger">Passenger</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+                  <span class="history-badge badge-{{ h.status }}">{{ h.status|title }}</span>
+                  <button onclick="deleteHistory('{{ h._id }}')" class="btn btn-danger btn-sm" style="padding:0.35rem 0.6rem;" title="Delete this record">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state" style="padding:1.5rem;">
+              <div class="empty-icon" style="font-size:2.5rem;"><i class="fa-solid fa-inbox" style="color:#a78bfa;"></i></div>
+              <p>No ride history yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="card" style="border-color:rgba(239,68,68,0.25);">
+        <div class="section-title" style="color:#f87171;"><i class="fa-solid fa-bolt" style="margin-right:0.4rem;"></i>Account Actions</div>
+        <a href="/logout" class="btn btn-danger btn-full" style="padding:0.9rem;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="/dashboard" class="bottom-nav-item"><span><i class="fa-solid fa-house"></i></span><span>Home</span></a>
+    <a href="/find-ride" class="bottom-nav-item"><span><i class="fa-solid fa-magnifying-glass"></i></span><span>Find</span></a>
+    {% if current_user_role == 'driver' %}
+    <a href="/offer-ride" class="bottom-nav-item"><span><i class="fa-solid fa-plus"></i></span><span>Offer</span></a>
+    <a href="/ride-requests" class="bottom-nav-item"><span><i class="fa-solid fa-clipboard-list"></i></span><span>Requests</span></a>
+    {% endif %}
+    <a href="/profile" class="bottom-nav-item active"><span><i class="fa-solid fa-circle-user"></i></span><span>Profile</span></a>
+  </div>
+</nav>
+
+<script>
+  async function deleteHistory(id) {
+    if (!confirm('Delete this ride record?')) return;
+    const res  = await fetch(`/delete-history/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const el = document.getElementById(`ph-${id}`);
+      if (el) { el.style.opacity='0'; el.style.transition='opacity 0.4s'; setTimeout(()=>el.remove(),400); }
+      showToast('fa-trash', 'Deleted', 'Ride history record removed.', 'info');
+    } else {
+      showToast('fa-circle-xmark', 'Error', data.message, 'error');
+    }
+  }
+
+  async function loadHistory() {
+    const res  = await fetch('/api/my-history');
+    const data = await res.json();
+    const container = document.getElementById('history-container');
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:1.5rem;"><div style="font-size:2.5rem;"><i class="fa-solid fa-inbox" style="color:#a78bfa;"></i></div><p>No ride history yet.</p></div>`;
+      return;
+    }
+    container.innerHTML = `<div style="display:flex;flex-direction:column;gap:0;">` +
+      data.map(h => `
+        <div class="history-item" style="padding:0.85rem 0;border-bottom:1px solid rgba(255,255,255,0.06);" id="ph-${h.id}">
+          <div style="display:flex;align-items:center;gap:0.85rem;flex:1;min-width:0;">
+            <div class="avatar" style="font-size:1.1rem;width:38px;height:38px;">
+              <i class="fa-solid ${h.role==='Driver' ? 'fa-motorcycle' : 'fa-user'}"></i>
+            </div>
+            <div class="history-route" style="min-width:0;">
+              <div class="from" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                <i class="fa-solid fa-location-dot" style="color:#a78bfa;font-size:0.75rem;"></i>
+                ${h.start_location}
+                <i class="fa-solid fa-arrow-right" style="opacity:0.4;font-size:0.7rem;margin:0 0.2rem;"></i>
+                <i class="fa-solid fa-flag-checkered" style="color:#86efac;font-size:0.75rem;"></i>
+                ${h.destination}
+              </div>
+              <div class="to">${h.start_time} &nbsp;•&nbsp; <span class="history-badge badge-${h.role.toLowerCase()}">${h.role}</span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+            <span class="history-badge badge-${h.status}">${h.status}</span>
+            <button onclick="deleteHistory('${h.id}')" class="btn btn-danger btn-sm" style="padding:0.35rem 0.6rem;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>`).join('') + `</div>`;
+  }
+
+  function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+
+  function showToast(icon, title, msg, type='info') {
+    const container=document.getElementById('toast-container');
+    const el=document.createElement('div');
+    el.className=`toast toast-${type}`;
+    el.innerHTML=`<span class="toast-icon"><i class="fa-solid ${icon}"></i></span><div style="flex:1;min-width:0;"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    container.appendChild(el);
+    setTimeout(()=>el.remove(),5000);
+  }
+</script>
+</body>
+</html>

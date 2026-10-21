@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configure Interview — INTERVIAI</title>
+  <meta name="description" content="Configure your AI mock interview settings including type, difficulty, duration, and monitoring options.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="icon" href="../assets/images/logo.png" type="image/png">
+  <style>
+    .option-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-primary);
+    }
+    .option-card:hover { border-color: var(--accent); background: var(--surface-hover); }
+    .option-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+    .option-card.selected .option-radio { background: var(--accent); border-color: var(--accent); }
+    .option-card.selected .option-radio::after { content: ''; width: 8px; height: 8px; background: white; border-radius: 50%; display: block; }
+    .option-radio {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s;
+    }
+    .config-section { margin-bottom: 24px; }
+    .config-label { font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-content">
+      <div id="topbar-placeholder"></div>
+
+      <main class="page-content">
+        <!-- Stepper (dynamic: completed steps depend on resume upload state) -->
+        <div class="stepper" style="margin-bottom:24px" id="configure-stepper">
+          <div class="step-item completed"><div class="step-num"><i class="bi bi-check-lg"></i></div><div class="step-label">Upload</div></div>
+          <div class="step-item completed" id="step-analysis"><div class="step-num"><i class="bi bi-check-lg"></i></div><div class="step-label">AI Analysis</div></div>
+          <div class="step-item active"><div class="step-num" aria-current="step">3</div><div class="step-label">Configure</div></div>
+          <div class="step-item"><div class="step-num">4</div><div class="step-label">Device Check</div></div>
+          <div class="step-item"><div class="step-num">5</div><div class="step-label">Interview</div></div>
+          <div class="step-item"><div class="step-num">6</div><div class="step-label">Report</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start" class="config-layout">
+
+          <!-- Config Form -->
+          <div>
+            <div class="page-header" style="margin-bottom:20px">
+              <h1>Configure Your Interview</h1>
+              <p>Customize the interview to match your preparation goals and target role.</p>
+            </div>
+
+            <form id="config-form">
+
+              <!-- Interview Type -->
+              <div class="config-section">
+                <div class="config-label">Interview Type</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="type-options">
+                  <div class="option-card selected" data-group="type" data-value="technical" onclick="selectOption(this,'type')" role="radio" aria-checked="true" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Technical</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">CS concepts, coding</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="type" data-value="hr" onclick="selectOption(this,'type')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">HR Round</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">Behavioral questions</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="type" data-value="project" onclick="selectOption(this,'type')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Project Based</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">Your work explained</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="type" data-value="full" onclick="selectOption(this,'type')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Full Interview</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">All rounds combined</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="type" data-value="coding" onclick="selectOption(this,'type')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Coding</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">Problem solving</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="type" data-value="resume" onclick="selectOption(this,'type')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Resume Based</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">From your resume</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Target Role -->
+              <div class="config-section">
+                <div class="config-label">Target Role</div>
+                <div class="form-group" style="margin:0">
+                  <div class="input-group-hm">
+                    <i class="bi bi-briefcase input-icon"></i>
+                    <select class="form-control-hm" id="target-role" aria-label="Select target role">
+                      <option value="auto">Auto Detect (Full Stack Developer)</option>
+                      <option value="fullstack">Full Stack Developer</option>
+                      <option value="python">Python Developer</option>
+                      <option value="backend">Backend Developer</option>
+                      <option value="frontend">Frontend Developer</option>
+                      <option value="data">Data Analyst</option>
+                      <option value="ml">Machine Learning Engineer</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Difficulty -->
+              <div class="config-section">
+                <div class="config-label">Difficulty Level</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="difficulty-options" class="difficulty-options">
+                  <div class="option-card" data-group="difficulty" data-value="beginner" onclick="selectOption(this,'difficulty')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Beginner</div>
+                      <div style="font-size:0.72rem;color:var(--success)">Easier questions</div>
+                    </div>
+                  </div>
+                  <div class="option-card selected" data-group="difficulty" data-value="intermediate" onclick="selectOption(this,'difficulty')" role="radio" aria-checked="true" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Intermediate</div>
+                      <div style="font-size:0.72rem;color:var(--warning)">Balanced mix</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="difficulty" data-value="advanced" onclick="selectOption(this,'difficulty')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Advanced</div>
+                      <div style="font-size:0.72rem;color:var(--danger)">Challenging</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Duration & Question Count -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="config-section duration-grid">
+                <div>
+                  <div class="config-label">Duration</div>
+                  <div class="input-group-hm">
+                    <i class="bi bi-clock input-icon"></i>
+                    <select class="form-control-hm" id="duration" aria-label="Select interview duration">
+                      <option value="10">10 minutes</option>
+                      <option value="20" selected>20 minutes</option>
+                      <option value="30">30 minutes</option>
+                      <option value="45">45 minutes</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <div class="config-label">Question Count</div>
+                  <div class="input-group-hm">
+                    <i class="bi bi-list-ol input-icon"></i>
+                    <select class="form-control-hm" id="question-count" aria-label="Select question count">
+                      <option value="5">5 questions</option>
+                      <option value="10" selected>10 questions</option>
+                      <option value="15">15 questions</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Language -->
+              <div class="config-section">
+                <div class="config-label">Interview Language</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" class="language-options">
+                  <div class="option-card selected" data-group="language" data-value="english" onclick="selectOption(this,'language')" role="radio" aria-checked="true" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">🇬🇧 English</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">International</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="language" data-value="hindi" onclick="selectOption(this,'language')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">🇮🇳 Hindi</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">हिन्दी</div>
+                    </div>
+                  </div>
+                  <div class="option-card" data-group="language" data-value="hinglish" onclick="selectOption(this,'language')" role="radio" aria-checked="false" tabindex="0">
+                    <div class="option-radio"></div>
+                    <div>
+                      <div style="font-size:0.82rem;font-weight:700">Hinglish</div>
+                      <div style="font-size:0.72rem;color:var(--text-muted)">Mixed</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monitoring Toggles -->
+              <div class="config-section">
+                <div class="config-label">Monitoring & Privacy</div>
+                <div class="card-hm" style="padding:0;overflow:hidden">
+                  <div style="padding:12px 16px;background:var(--accent-light);border-bottom:1px solid rgba(37,99,235,0.1)">
+                    <div style="font-size:0.8rem;color:var(--accent)">
+                      <i class="bi bi-info-circle-fill"></i>
+                      <strong> Consent Notice:</strong> Enabling monitoring uses your device camera and microphone. No data is uploaded in this demo.
+                    </div>
+                  </div>
+
+                  <div style="padding:8px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 8px;border-bottom:1px solid var(--border-light)">
+                      <div>
+                        <div style="font-size:0.875rem;font-weight:600">Camera Monitoring</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted)">Face detection and presence tracking</div>
+                      </div>
+                      <label class="toggle-switch" aria-label="Toggle camera monitoring">
+                        <input type="checkbox" id="toggle-camera" checked>
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 8px;border-bottom:1px solid var(--border-light)">
+                      <div>
+                        <div style="font-size:0.875rem;font-weight:600">Browser Integrity Monitor</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted)">Tab switches, focus loss detection</div>
+                      </div>
+                      <label class="toggle-switch" aria-label="Toggle browser integrity monitoring">
+                        <input type="checkbox" id="toggle-integrity" checked>
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 8px">
+                      <div>
+                        <div style="font-size:0.875rem;font-weight:600">Interview Recording</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted)">Record session locally (demo only)</div>
+                      </div>
+                      <label class="toggle-switch" aria-label="Toggle interview recording">
+                        <input type="checkbox" id="toggle-recording">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-hm btn-primary btn-lg" style="width:100%;justify-content:center">
+                <i class="bi bi-display"></i> Proceed to Device Check
+              </button>
+            </form>
+          </div>
+
+          <!-- Summary Card -->
+          <div>
+            <div class="card-hm" style="position:sticky;top:80px">
+              <div class="card-title" style="margin-bottom:16px">Interview Summary</div>
+
+              <div id="summary-resume" style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg);border-radius:var(--radius);margin-bottom:16px">
+                <i class="bi bi-file-earmark-person-fill" style="color:var(--accent);font-size:1.4rem"></i>
+                <div>
+                  <div style="font-size:0.8rem;font-weight:700;color:var(--text-primary)">Mohan Saini</div>
+                  <div style="font-size:0.72rem;color:var(--accent)">Full Stack Developer • 92%</div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:0.82rem;margin-bottom:20px">
+                <div style="display:flex;justify-content:space-between">
+                  <span style="color:var(--text-muted)">Type</span>
+                  <span id="s-type" style="font-weight:600;color:var(--text-primary)">Technical</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                  <span style="color:var(--text-muted)">Difficulty</span>
+                  <span id="s-diff" style="font-weight:600;color:var(--text-primary)">Intermediate</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                  <span style="color:var(--text-muted)">Duration</span>
+                  <span id="s-dur" style="font-weight:600;color:var(--text-primary)">20 min</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                  <span style="color:var(--text-muted)">Questions</span>
+                  <span id="s-qcount" style="font-weight:600;color:var(--text-primary)">10</span>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                  <span style="color:var(--text-muted)">Language</span>
+                  <span id="s-lang" style="font-weight:600;color:var(--text-primary)">English</span>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:6px;padding:12px;background:var(--bg);border-radius:var(--radius);font-size:0.78rem">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <i class="bi bi-camera-video-fill" style="color:var(--accent)"></i>
+                  <span id="s-camera" style="color:var(--text-secondary)">Camera: Enabled</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <i class="bi bi-shield-check-fill" style="color:var(--success)"></i>
+                  <span id="s-integrity" style="color:var(--text-secondary)">Integrity: Enabled</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <i class="bi bi-record-circle-fill" style="color:var(--danger)"></i>
+                  <span id="s-recording" style="color:var(--text-secondary)">Recording: Disabled</span>
+                </div>
+              </div>
+
+              <!-- Tips -->
+              <div style="margin-top:16px;padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:white">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--primary);margin-bottom:8px">
+                  <i class="bi bi-lightbulb-fill" style="color:var(--warning)"></i> Interview Tips
+                </div>
+                <ul style="font-size:0.75rem;color:var(--text-muted);padding-left:16px;display:flex;flex-direction:column;gap:5px">
+                  <li>Find a quiet, well-lit location</li>
+                  <li>Speak clearly and at moderate pace</li>
+                  <li>Structure answers: STAR method</li>
+                  <li>It's okay to take a moment to think</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="mobile-nav-placeholder"></div>
+
+  <script src="../js/storage.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/app.js"></script>
+  <script>
+    const configState = {
+      type: 'technical',
+      difficulty: 'intermediate',
+      language: 'english'
+    };
+
+    function selectOption(el, group) {
+      document.querySelectorAll(`[data-group="${group}"]`).forEach(c => {
+        c.classList.remove('selected');
+        c.setAttribute('aria-checked', 'false');
+      });
+      el.classList.add('selected');
+      el.setAttribute('aria-checked', 'true');
+      configState[group] = el.dataset.value;
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const typeLabels = { technical:'Technical', hr:'HR Round', project:'Project Based', full:'Full Interview', coding:'Coding', resume:'Resume Based' };
+      const diffLabels = { beginner:'Beginner', intermediate:'Intermediate', advanced:'Advanced' };
+      const langLabels = { english:'English', hindi:'Hindi', hinglish:'Hinglish' };
+
+      document.getElementById('s-type').textContent = typeLabels[configState.type] || configState.type;
+      document.getElementById('s-diff').textContent = diffLabels[configState.difficulty] || configState.difficulty;
+      document.getElementById('s-lang').textContent = langLabels[configState.language] || configState.language;
+
+      const dur = document.getElementById('duration');
+      const qc = document.getElementById('question-count');
+      if (dur) document.getElementById('s-dur').textContent = dur.value + ' min';
+      if (qc) document.getElementById('s-qcount').textContent = qc.value;
+
+      const cam = document.getElementById('toggle-camera');
+      const integ = document.getElementById('toggle-integrity');
+      const rec = document.getElementById('toggle-recording');
+      if (cam) document.getElementById('s-camera').textContent = 'Camera: ' + (cam.checked ? 'Enabled' : 'Disabled');
+      if (integ) document.getElementById('s-integrity').textContent = 'Integrity: ' + (integ.checked ? 'Enabled' : 'Disabled');
+      if (rec) document.getElementById('s-recording').textContent = 'Recording: ' + (rec.checked ? 'Enabled' : 'Disabled');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      App.init({ topbarTitle: 'Configure Interview', activePage: 'configure' });
+
+      // Load existing config
+      const saved = Storage.getConfig();
+
+      // Add keyboard support for option cards
+      document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            card.click();
+          }
+        });
+      });
+
+      // Live update summary on select changes
+      document.getElementById('duration')?.addEventListener('change', updateSummary);
+      document.getElementById('question-count')?.addEventListener('change', updateSummary);
+      document.getElementById('toggle-camera')?.addEventListener('change', updateSummary);
+      document.getElementById('toggle-integrity')?.addEventListener('change', updateSummary);
+      document.getElementById('toggle-recording')?.addEventListener('change', updateSummary);
+
+      // Form submit
+      document.getElementById('config-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const config = {
+          type: configState.type,
+          difficulty: configState.difficulty,
+          language: configState.language,
+          duration: parseInt(document.getElementById('duration').value),
+          questionCount: parseInt(document.getElementById('question-count').value),
+          role: document.getElementById('target-role').value,
+          cameraMonitoring: document.getElementById('toggle-camera').checked,
+          integrityMonitoring: document.getElementById('toggle-integrity').checked,
+          recording: document.getElementById('toggle-recording').checked
+        };
+        Storage.setConfig(config);
+        Utils.showSuccess('Configuration Saved', 'Proceeding to device check...');
+        setTimeout(() => Utils.navigate('device-check.html'), 600);
+      });
+
+      updateSummary();
+
+      // Responsive layout
+      const layout = document.querySelector('.config-layout');
+      if (layout && window.innerWidth < 1024) layout.style.gridTemplateColumns = '1fr';
+
+      // Fix stepper: only mark Analysis as completed if resume was actually parsed
+      const resumeData = Storage.getResumeData();
+      const stepAnalysis = document.getElementById('step-analysis');
+      if (stepAnalysis && !resumeData?.parsed) {
+        stepAnalysis.classList.remove('completed');
+      }
+    });
+  </script>
+</body>
+</html>

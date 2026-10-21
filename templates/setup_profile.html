@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Setup Profile — Campus Rides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;min-height:100vh;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);display:flex;align-items:center;justify-content:center;padding:1.5rem;position:relative;overflow:hidden;}
+    
+    /* Animated Background */
+    .floating-orbs{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+    .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.15;animation:float 12s ease-in-out infinite;}
+    .orb1{width:400px;height:400px;background:#7c3aed;top:-100px;left:-100px;}
+    .orb2{width:300px;height:300px;background:#2563eb;bottom:-100px;right:-50px;animation-delay:-6s;}
+    .orb3{width:250px;height:250px;background:#0891b2;top:50%;left:50%;animation-delay:-3s;}
+    @keyframes float{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(30px,-30px) scale(1.05);}66%{transform:translate(-20px,20px) scale(0.95);}}
+    
+    /* Main Card */
+    .card{width:100%;max-width:550px;background:rgba(255,255,255,0.08);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,0.15);border-radius:1.8rem;padding:3rem 2.5rem;box-shadow:0 30px 80px rgba(0,0,0,0.5);position:relative;z-index:1;animation:slideUp 0.6s ease;}
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+    
+    /* Header */
+    .header{text-align:center;margin-bottom:2.5rem;position:relative;}
+    .profile-icon{width:80px;height:80px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 1rem;box-shadow:0 15px 40px rgba(124,58,237,0.4);animation:pulse 2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 15px 40px rgba(124,58,237,0.4);}50%{transform:scale(1.05);box-shadow:0 20px 50px rgba(124,58,237,0.6);}}
+    .header h1{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.4rem;}
+    .header p{color:rgba(255,255,255,0.6);font-size:0.9rem;}
+    
+    /* Progress Steps */
+    .step-indicator{display:flex;justify-content:center;align-items:center;gap:0.6rem;margin-bottom:2rem;}
+    .step{position:relative;display:flex;align-items:center;}
+    .step-circle{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-weight:700;font-size:0.8rem;transition:all 0.4s;}
+    .step.done .step-circle{background:linear-gradient(135deg,#7c3aed,#4f46e5);border-color:#7c3aed;color:#fff;box-shadow:0 5px 20px rgba(124,58,237,0.5);}
+    .step.active .step-circle{background:rgba(124,58,237,0.2);border-color:#7c3aed;color:#a78bfa;animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;}
+    @keyframes ping{75%,100%{transform:scale(1.1);opacity:0;}}
+    .step.active .step-circle::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid #7c3aed;animation:ping 2s cubic-bezier(0,0,0.2,1) infinite;}
+    .step-line{width:40px;height:2px;background:rgba(255,255,255,0.15);margin:0 -0.3rem;}
+    .step.done ~ .step .step-line{background:rgba(255,255,255,0.1);}
+    .step.done .step-line{background:linear-gradient(90deg,#7c3aed,#4f46e5);}
+    
+    /* Alerts */
+    .alert{padding:1rem 1.2rem;border-radius:1rem;font-size:0.875rem;font-weight:600;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.8rem;animation:slideDown 0.4s ease;}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+    .alert i{font-size:1.2rem;}
+    .alert-error{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;}
+    .alert-success{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#86efac;}
+    .alert-info{background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd;}
+    
+    /* Form Elements */
+    .form-group{margin-bottom:1.5rem;position:relative;}
+    label{display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:0.6rem;}
+    label i{font-size:1rem;color:#a78bfa;}
+    .required{color:#ef4444;margin-left:0.2rem;}
+    
+    .input-wrapper{position:relative;}
+    .input-icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.4);font-size:1.1rem;pointer-events:none;}
+    input,select,textarea{width:100%;padding:0.95rem 1.2rem;padding-left:2.8rem;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);border-radius:1rem;color:#fff;font-size:0.95rem;font-family:'Inter',sans-serif;outline:none;transition:all 0.3s;-webkit-appearance:none;}
+    input:focus,select:focus,textarea:focus{border-color:#7c3aed;background:rgba(124,58,237,0.12);box-shadow:0 0 0 4px rgba(124,58,237,0.15);transform:translateY(-2px);}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.35);}
+    select option{background:#1e1b4b;color:#fff;padding:0.5rem;}
+    textarea{min-height:100px;resize:vertical;padding-left:1.2rem;}
+    
+    /* Character Counter */
+    .char-counter{text-align:right;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.3rem;}
+    
+    /* Vehicle Selection */
+    .vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:0.5rem;}
+    .vehicle-opt{cursor:pointer;}
+    .vehicle-opt input{display:none;}
+    .vehicle-box{padding:1.2rem 0.8rem;text-align:center;border:2px solid rgba(255,255,255,0.15);border-radius:1.2rem;transition:all 0.3s;background:rgba(255,255,255,0.05);position:relative;overflow:hidden;}
+    .vehicle-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(79,70,229,0.1));opacity:0;transition:opacity 0.3s;}
+    .vehicle-box:hover{border-color:rgba(124,58,237,0.5);background:rgba(124,58,237,0.08);transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.2);}
+    .vehicle-box:hover::before{opacity:1;}
+    .vehicle-opt input:checked ~ .vehicle-box{border-color:#7c3aed;background:rgba(124,58,237,0.2);box-shadow:0 0 0 4px rgba(124,58,237,0.15),0 8px 25px rgba(124,58,237,0.3);transform:translateY(-3px);}
+    .vehicle-opt input:checked ~ .vehicle-box::before{opacity:1;}
+    .vehicle-opt input:checked ~ .vehicle-box .checkmark{opacity:1;transform:scale(1);}
+    .vehicle-box .icon{font-size:2.2rem;margin-bottom:0.5rem;transition:transform 0.3s;}
+    .vehicle-opt input:checked ~ .vehicle-box .icon{transform:scale(1.1);}
+    .vehicle-box .name{font-size:0.8rem;font-weight:700;color:rgba(255,255,255,0.75);margin-bottom:0.3rem;}
+    .vehicle-box .desc{font-size:0.65rem;color:rgba(255,255,255,0.4);}
+    .checkmark{position:absolute;top:0.5rem;right:0.5rem;width:20px;height:20px;background:#7c3aed;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0);transition:all 0.3s;}
+    .checkmark i{font-size:0.65rem;color:#fff;}
+    
+    /* Upload Section */
+    .upload-area{border:2px dashed rgba(255,255,255,0.15);border-radius:1rem;padding:2rem 1.5rem;text-align:center;cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.03);position:relative;}
+    .upload-area:hover{border-color:#7c3aed;background:rgba(124,58,237,0.08);}
+    .upload-area.dragover{border-color:#7c3aed;background:rgba(124,58,237,0.15);transform:scale(1.02);}
+    .upload-icon{font-size:2.5rem;color:rgba(255,255,255,0.3);margin-bottom:0.8rem;}
+    .upload-text{color:rgba(255,255,255,0.6);font-size:0.9rem;margin-bottom:0.3rem;}
+    .upload-subtext{color:rgba(255,255,255,0.4);font-size:0.75rem;}
+    .file-input{display:none;}
+    .file-preview{margin-top:1rem;display:flex;align-items:center;gap:1rem;padding:1rem;background:rgba(124,58,237,0.1);border-radius:0.8rem;border:1px solid rgba(124,58,237,0.3);}
+    .file-preview img{width:50px;height:50px;border-radius:0.5rem;object-fit:cover;}
+    .file-info{flex:1;}
+    .file-name{color:#fff;font-size:0.85rem;font-weight:600;margin-bottom:0.2rem;}
+    .file-size{color:rgba(255,255,255,0.5);font-size:0.75rem;}
+    .remove-file{background:rgba(239,68,68,0.2);border:none;color:#fca5a5;padding:0.4rem 0.8rem;border-radius:0.5rem;cursor:pointer;font-size:0.75rem;font-weight:600;transition:all 0.2s;}
+    .remove-file:hover{background:rgba(239,68,68,0.3);}
+    
+    /* Checkbox */
+    .checkbox-wrapper{display:flex;align-items:flex-start;gap:0.8rem;margin-bottom:1.5rem;}
+    .checkbox-wrapper input[type="checkbox"]{width:auto;padding:0;margin:0;position:relative;cursor:pointer;width:20px;height:20px;}
+    .checkbox-wrapper input[type="checkbox"]:checked{background:#7c3aed;border-color:#7c3aed;}
+    .checkbox-wrapper input[type="checkbox"]:checked::after{content:'✓';position:absolute;color:#fff;font-size:0.75rem;top:50%;left:50%;transform:translate(-50%,-50%);}
+    .checkbox-wrapper label{margin:0;font-size:0.85rem;color:rgba(255,255,255,0.6);font-weight:500;cursor:pointer;}
+    .checkbox-wrapper a{color:#a78bfa;text-decoration:none;}
+    .checkbox-wrapper a:hover{text-decoration:underline;}
+    
+    /* Buttons */
+    .btn{width:100%;padding:1.1rem;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:1rem;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all 0.3s;font-family:'Inter',sans-serif;margin-top:1rem;display:flex;align-items:center;justify-content:center;gap:0.6rem;box-shadow:0 10px 30px rgba(124,58,237,0.4);position:relative;overflow:hidden;}
+    .btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);transform:translateX(-100%);transition:transform 0.3s;}
+    .btn:hover{transform:translateY(-3px);box-shadow:0 15px 40px rgba(124,58,237,0.6);}
+    .btn:hover::before{transform:translateX(100%);}
+    .btn:active{transform:translateY(-1px);}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+    .btn i{font-size:1.1rem;}
+    
+    .btn-secondary{background:rgba(255,255,255,0.1);box-shadow:none;margin-top:0.8rem;}
+    .btn-secondary:hover{background:rgba(255,255,255,0.15);box-shadow:none;}
+    
+    /* Tooltip */
+    .tooltip{position:relative;display:inline-block;}
+    .tooltip .tooltiptext{visibility:hidden;width:200px;background:rgba(0,0,0,0.9);color:#fff;text-align:center;border-radius:0.5rem;padding:0.5rem;position:absolute;z-index:1;bottom:125%;left:50%;margin-left:-100px;opacity:0;transition:opacity 0.3s;font-size:0.75rem;}
+    .tooltip:hover .tooltiptext{visibility:visible;opacity:1;}
+    
+    /* Loading State */
+    .loading{pointer-events:none;}
+    .loading::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,0.3);border-radius:1rem;display:flex;align-items:center;justify-content:center;}
+    .spinner{width:20px;height:20px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    
+    /* Responsive */
+    @media(max-width:640px){
+      .card{padding:2rem 1.5rem;}
+      .vehicle-grid{grid-template-columns:1fr;}
+      .step-indicator{gap:0.4rem;}
+      .step-circle{width:32px;height:32px;}
+      .step-line{width:30px;}
+    }
+  </style>
+</head>
+<body>
+  <!-- Floating Orbs -->
+  <div class="floating-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="card">
+    <!-- Header -->
+    <div class="header">
+      <div class="profile-icon">
+        <i class="fa-solid fa-user-gear"></i>
+      </div>
+      <h1>Complete Your Profile</h1>
+      <p>Just a few more details to get you on the road</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="step-indicator">
+      <div class="step done">
+        <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step done">
+        <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step active">
+        <div class="step-circle">3</div>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">
+          {% if cat == 'error' %}
+            <i class="fa-solid fa-circle-exclamation"></i>
+          {% elif cat == 'success' %}
+            <i class="fa-solid fa-circle-check"></i>
+          {% else %}
+            <i class="fa-solid fa-circle-info"></i>
+          {% endif %}
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Form -->
+    <form method="POST" action="/setup-profile" id="profileForm" enctype="multipart/form-data">
+      
+      <!-- Phone Number -->
+      <div class="form-group">
+        <label for="phone">
+          <i class="fa-solid fa-phone"></i>
+          Phone Number
+          <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <i class="input-icon fa-solid fa-mobile-screen-button"></i>
+          <input 
+            type="tel" 
+            name="phone" 
+            id="phone" 
+            required 
+            placeholder="Enter 10-digit mobile number" 
+            maxlength="10" 
+            pattern="[0-9]{10}" 
+            inputmode="numeric"
+            autocomplete="tel"
+          />
+        </div>
+        <small style="color:rgba(255,255,255,0.5);font-size:0.75rem;margin-top:0.3rem;display:block;">
+          <i class="fa-solid fa-shield-halved"></i> We'll verify this via OTP
+        </small>
+      </div>
+
+      <!-- Department -->
+      <div class="form-group">
+        <label for="department">
+          <i class="fa-solid fa-building-columns"></i>
+          Department
+          <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <i class="input-icon fa-solid fa-graduation-cap"></i>
+          <select name="department" id="department" required>
+            <option value="">Select your department</option>
+            <optgroup label="Engineering">
+              <option>Computer Science & Engineering</option>
+              <option>Information Technology</option>
+              <option>Electronics & Communication</option>
+              <option>Electrical Engineering</option>
+              <option>Mechanical Engineering</option>
+              <option>Civil Engineering</option>
+              <option>Chemical Engineering</option>
+            </optgroup>
+            <optgroup label="Management">
+              <option>MBA (Master of Business Administration)</option>
+              <option>BBA (Bachelor of Business Administration)</option>
+            </optgroup>
+            <optgroup label="Science & Arts">
+              <option>BSc Computer Science</option>
+              <option>BSc Mathematics</option>
+              <option>BA English</option>
+              <option>BCA (Computer Applications)</option>
+            </optgroup>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Year of Study -->
+      <div class="form-group">
+        <label for="year">
+          <i class="fa-solid fa-calendar-days"></i>
+          Year of Study
+          <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <i class="input-icon fa-solid fa-layer-group"></i>
+          <select name="year" id="year" required>
+            <option value="">Select year</option>
+            <option value="1">First Year</option>
+            <option value="2">Second Year</option>
+            <option value="3">Third Year</option>
+            <option value="4">Fourth Year</option>
+            <option value="pg">Post Graduate</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Student ID -->
+      <div class="form-group">
+        <label for="student_id">
+          <i class="fa-solid fa-id-card"></i>
+          Student ID
+          <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <i class="input-icon fa-solid fa-hashtag"></i>
+          <input 
+            type="text" 
+            name="student_id" 
+            id="student_id" 
+            required 
+            placeholder="Enter your student ID" 
+            maxlength="20"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="form-group">
+        <label for="bio">
+          <i class="fa-solid fa-comment-dots"></i>
+          Bio (Optional)
+        </label>
+        <textarea 
+          name="bio" 
+          id="bio" 
+          placeholder="Tell others a bit about yourself..."
+          maxlength="200"
+        ></textarea>
+        <div class="char-counter"><span id="bioCount">0</span>/200</div>
+      </div>
+
+      <!-- Vehicle Type -->
+      <div class="form-group">
+        <label>
+          <i class="fa-solid fa-car"></i>
+          Do you have a vehicle?
+          <span class="required">*</span>
+        </label>
+        <div class="vehicle-grid">
+          <label class="vehicle-opt">
+            <input type="radio" name="vehicle_type" value="bike" id="bike"/>
+            <div class="vehicle-box">
+              <div class="checkmark"><i class="fa-solid fa-check"></i></div>
+              <div class="icon" style="font-size:2rem;"><i class="fa-solid fa-motorcycle" style="color:#a78bfa;"></i></div>
+              <div class="name">Bike</div>
+              <div class="desc">Motorcycle</div>
+            </div>
+          </label>
+          <label class="vehicle-opt">
+            <input type="radio" name="vehicle_type" value="scooter" id="scooter"/>
+            <div class="vehicle-box">
+              <div class="checkmark"><i class="fa-solid fa-check"></i></div>
+              <div class="icon" style="font-size:2rem;"><i class="fa-solid fa-bicycle" style="color:#67e8f9;"></i></div>
+              <div class="name">Scooter</div>
+              <div class="desc">Two-wheeler</div>
+            </div>
+          </label>
+          <label class="vehicle-opt">
+            <input type="radio" name="vehicle_type" value="no_vehicle" id="no_vehicle" checked/>
+            <div class="vehicle-box">
+              <div class="checkmark"><i class="fa-solid fa-check"></i></div>
+              <div class="icon" style="font-size:2rem;"><i class="fa-solid fa-person-walking" style="color:#86efac;"></i></div>
+              <div class="name">None</div>
+              <div class="desc">Rider only</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Vehicle Details (shown only if vehicle selected) -->
+      <div id="vehicleDetails" style="display:none;">
+        <div class="form-group">
+          <label for="vehicle_number">
+            <i class="fa-solid fa-hashtag"></i>
+            Vehicle Registration Number
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <i class="input-icon fa-solid fa-id-badge"></i>
+            <input 
+              type="text" 
+              name="vehicle_number" 
+              id="vehicle_number" 
+              placeholder="e.g., KA01AB1234" 
+              maxlength="15"
+              style="text-transform:uppercase;"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="vehicle_model">
+            <i class="fa-solid fa-motorcycle"></i>
+            Vehicle Model
+          </label>
+          <div class="input-wrapper">
+            <i class="input-icon fa-solid fa-tag"></i>
+            <input 
+              type="text" 
+              name="vehicle_model" 
+              id="vehicle_model" 
+              placeholder="e.g., Honda Activa, Royal Enfield" 
+              maxlength="50"
+            />
+          </div>
+        </div>
+
+        <!-- Document Upload -->
+        <div class="form-group">
+          <label>
+            <i class="fa-solid fa-file-arrow-up"></i>
+            Upload Driving License (Optional)
+          </label>
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-subtext">PNG, JPG or PDF (max. 5MB)</div>
+            <input type="file" name="license" id="license" class="file-input" accept="image/*,.pdf"/>
+          </div>
+          <div id="filePreview" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="form-group">
+        <label for="emergency_contact">
+          <i class="fa-solid fa-phone-volume"></i>
+          Emergency Contact Number
+          <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <i class="input-icon fa-solid fa-user-shield"></i>
+          <input 
+            type="tel" 
+            name="emergency_contact" 
+            id="emergency_contact" 
+            required 
+            placeholder="Parent/Guardian mobile number" 
+            maxlength="10" 
+            pattern="[0-9]{10}" 
+            inputmode="numeric"
+          />
+        </div>
+        <small style="color:rgba(255,255,255,0.5);font-size:0.75rem;margin-top:0.3rem;display:block;">
+          <i class="fa-solid fa-circle-info"></i> Will be contacted in case of emergency only
+        </small>
+      </div>
+
+      <!-- Terms & Conditions -->
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="terms" name="terms" required/>
+        <label for="terms">
+          I agree to the <a href="/terms" target="_blank">Terms & Conditions</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn" id="submitBtn">
+        <i class="fa-solid fa-rocket"></i>
+        Complete Setup & Start Riding!
+      </button>
+
+      <button type="button" class="btn btn-secondary" onclick="history.back()">
+        <i class="fa-solid fa-arrow-left"></i>
+        Go Back
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Bio character counter
+    const bioInput = document.getElementById('bio');
+    const bioCount = document.getElementById('bioCount');
+    bioInput.addEventListener('input', () => {
+      bioCount.textContent = bioInput.value.length;
+    });
+
+    // Show/hide vehicle details
+    const vehicleRadios = document.querySelectorAll('input[name="vehicle_type"]');
+    const vehicleDetails = document.getElementById('vehicleDetails');
+    const vehicleNumber = document.getElementById('vehicle_number');
+
+    vehicleRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value !== 'no_vehicle') {
+          vehicleDetails.style.display = 'block';
+          vehicleNumber.required = true;
+        } else {
+          vehicleDetails.style.display = 'none';
+          vehicleNumber.required = false;
+        }
+      });
+    });
+
+    // File upload handling
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('license');
+    const filePreview = document.getElementById('filePreview');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+      }
+    });
+
+    function handleFileSelect(file) {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        fileInput.value = '';
+        return;
+      }
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fileType = file.type;
+        let preview = '';
+        
+        if (fileType.startsWith('image/')) {
+          preview = `<img src="${e.target.result}" alt="Preview"/>`;
+        } else {
+          preview = `<i class="fa-solid fa-file-pdf" style="font-size:3rem;color:#ef4444;"></i>`;
+        }
+
+        filePreview.innerHTML = `
+          <div class="file-preview">
+            ${preview}
+            <div class="file-info">
+              <div class="file-name">${file.name}</div>
+              <div class="file-size">${(file.size / 1024).toFixed(2)} KB</div>
+            </div>
+            <button type="button" class="remove-file" onclick="removeFile()">
+              <i class="fa-solid fa-xmark"></i> Remove
+            </button>
+          </div>
+        `;
+        filePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeFile() {
+      fileInput.value = '';
+      filePreview.style.display = 'none';
+      filePreview.innerHTML = '';
+    }
+
+    // Phone number validation
+    const phoneInput = document.getElementById('phone');
+    const emergencyInput = document.getElementById('emergency_contact');
+
+    [phoneInput, emergencyInput].forEach(input => {
+      input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      });
+    });
+
+    // Form submission with loading state
+    const form = document.getElementById('profileForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', (e) => {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner"></div> Setting up...';
+    });
+
+    // Auto-uppercase vehicle number
+    const vehicleNumberInput = document.getElementById('vehicle_number');
+    if (vehicleNumberInput) {
+      vehicleNumberInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase();
+      });
+    }
+
+    // Validate student ID format
+    const studentIdInput = document.getElementById('student_id');
+    studentIdInput.addEventListener('blur', () => {
+      if (studentIdInput.value && studentIdInput.value.length < 5) {
+        studentIdInput.setCustomValidity('Student ID must be at least 5 characters');
+      } else {
+        studentIdInput.setCustomValidity('');
+      }
+    });
+  </script>
+</body>
+</html>

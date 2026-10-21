@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Campus Rides</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"/>
+  <link rel="stylesheet" href="/static/css/main.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div style="width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:0.6rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fa-solid fa-motorcycle" style="color:#fff;font-size:1.1rem;"></i>
+      </div>
+      <div>
+        <h2>Campus Rides</h2>
+        <p>Smart ride sharing</p>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="name">{{ current_user_name }}</div>
+      <div class="role-badge {% if current_user_role == 'driver' %}role-driver{% else %}role-passenger{% endif %}">
+        {% if current_user_role == 'driver' %}
+          <i class="fa-solid fa-motorcycle"></i> Driver
+        {% else %}
+          <i class="fa-solid fa-user"></i> Passenger
+        {% endif %}
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="/dashboard" class="nav-item active">
+        <i class="fa-solid fa-house"></i> <span>Dashboard</span>
+      </a>
+      <a href="/find-ride" class="nav-item">
+        <i class="fa-solid fa-magnifying-glass"></i> <span>Find a Ride</span>
+      </a>
+      {% if current_user_role == 'driver' %}
+      <a href="/offer-ride" class="nav-item">
+        <i class="fa-solid fa-plus"></i> <span>Offer Ride</span>
+      </a>
+      <a href="/ride-requests" class="nav-item">
+        <i class="fa-solid fa-clipboard-list"></i> <span>Ride Requests</span>
+        <span class="nav-badge" id="req-count" style="display:none">0</span>
+      </a>
+      {% endif %}
+      <a href="/profile" class="nav-item">
+        <i class="fa-solid fa-user"></i> <span>My Profile</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/logout" class="nav-item" style="color:#f87171">
+        <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ──────────────────────── -->
+  <main class="main-content">
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+      <button class="hamburger" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+      <span style="display:flex;align-items:center;gap:0.5rem;font-weight:800;">
+        <i class="fa-solid fa-motorcycle" style="color:#a78bfa;"></i> Campus Rides
+      </span>
+      <a href="/profile" style="color:rgba(255,255,255,0.7);font-size:1.1rem;"><i class="fa-solid fa-user"></i></a>
+    </div>
+
+    <div class="page-body">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <!-- Welcome Banner -->
+      <div class="card" style="background:linear-gradient(135deg,rgba(124,58,237,0.25),rgba(79,70,229,0.25));border-color:rgba(124,58,237,0.35);margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+          <div>
+            <h2 style="font-size:1.4rem;font-weight:900;">Welcome back, {{ current_user_name }}! <i class="fa-solid fa-hand" style="color:#fde68a;"></i></h2>
+            <p style="color:rgba(255,255,255,0.6);margin-top:0.25rem;font-size:0.9rem;">Ready to share a ride today?</p>
+          </div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            {% if current_user_role == 'driver' %}
+            <a href="/offer-ride" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Offer Ride</a>
+            {% endif %}
+            <a href="/find-ride" class="btn btn-outline btn-sm"><i class="fa-solid fa-magnifying-glass"></i> Find Ride</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-route" style="color:#a78bfa;"></i></div>
+          <div class="stat-value">{{ recent_rides|length }}</div>
+          <div class="stat-label">Active Rides</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-motorcycle" style="color:#67e8f9;"></i></div>
+          <div class="stat-value" style="font-size:1rem;text-transform:capitalize;">{{ current_vehicle or 'None' }}</div>
+          <div class="stat-label">Your Vehicle</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-chart-line" style="color:#86efac;"></i></div>
+          <div class="stat-value" id="stat-history">—</div>
+          <div class="stat-label">Total Rides</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-indian-rupee-sign" style="color:#fde68a;"></i></div>
+          <div class="stat-value">20–30</div>
+          <div class="stat-label">Fare Range</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="grid2" style="margin-bottom:1.5rem;">
+        {% if current_user_role == 'driver' %}
+        <a href="/offer-ride" class="card" style="text-decoration:none;background:linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.3));border-color:rgba(124,58,237,0.4);transition:all 0.3s;display:block;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:2rem;margin-bottom:0.75rem;color:#a78bfa;"><i class="fa-solid fa-circle-plus"></i></div>
+          <div style="font-weight:800;font-size:1rem;">Offer a Ride</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:0.25rem;">Share your route &amp; earn money</div>
+        </a>
+        {% endif %}
+        <a href="/find-ride" class="card" style="text-decoration:none;background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(79,70,229,0.2));border-color:rgba(6,182,212,0.35);transition:all 0.3s;display:block;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+          <div style="font-size:2rem;margin-bottom:0.75rem;color:#67e8f9;"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+          <div style="font-weight:800;font-size:1rem;">Find a Ride</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:0.25rem;">Browse available rides near you</div>
+        </a>
+      </div>
+
+      <!-- Recent Available Rides -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="section-title"><i class="fa-solid fa-car-side" style="color:#a78bfa;margin-right:0.4rem;"></i>Recent Available Rides</div>
+        {% if recent_rides %}
+          {% for ride in recent_rides %}
+          <div class="ride-card" style="margin-bottom:0.75rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+              <div>
+                <div style="font-weight:700;font-size:0.95rem;">
+                  <i class="fa-solid fa-location-dot" style="color:#a78bfa;margin-right:0.3rem;"></i>
+                  {{ ride.start_location }}
+                  <i class="fa-solid fa-arrow-right" style="color:rgba(255,255,255,0.4);margin:0 0.3rem;font-size:0.75rem;"></i>
+                  <i class="fa-solid fa-flag-checkered" style="color:#86efac;margin-right:0.3rem;"></i>
+                  {{ ride.destination }}
+                </div>
+                <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:0.3rem;">
+                  <i class="fa-solid fa-motorcycle"></i> {{ ride.driver_name }} &nbsp;&bull;&nbsp;
+                  <i class="fa-solid fa-users"></i> {{ ride.available_seats }} seats &nbsp;&bull;&nbsp;
+                  <i class="fa-solid fa-indian-rupee-sign"></i> {{ ride.price }}
+                </div>
+              </div>
+              <a href="/find-ride" class="btn btn-outline btn-sm">View <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-motorcycle" style="color:#a78bfa;"></i></div>
+            <h3>No active rides</h3>
+            <p>Check back later or be the first to offer one!</p>
+            {% if current_user_role == 'driver' %}
+            <a href="/offer-ride" class="btn btn-primary btn-sm" style="margin-top:1rem;"><i class="fa-solid fa-plus"></i> Offer a Ride</a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Ride History -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-clock-rotate-left" style="color:#a78bfa;margin-right:0.4rem;"></i>My Ride History</div>
+          <button onclick="loadHistory()" class="btn btn-outline btn-sm"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+        <div id="history-list">
+          <div class="empty-state" style="padding:1.5rem;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:#a78bfa;"></i>
+            <p style="margin-top:0.75rem;">Loading history...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="/dashboard" class="bottom-nav-item active">
+      <span><i class="fa-solid fa-house"></i></span><span>Home</span>
+    </a>
+    <a href="/find-ride" class="bottom-nav-item">
+      <span><i class="fa-solid fa-magnifying-glass"></i></span><span>Find</span>
+    </a>
+    {% if current_user_role == 'driver' %}
+    <a href="/offer-ride" class="bottom-nav-item">
+      <span><i class="fa-solid fa-plus"></i></span><span>Offer</span>
+    </a>
+    <a href="/ride-requests" class="bottom-nav-item" id="bnav-reqs">
+      <span><i class="fa-solid fa-clipboard-list"></i></span><span>Requests</span>
+      <span class="bnav-badge" id="bnav-req-count" style="display:none">0</span>
+    </a>
+    {% endif %}
+    <a href="/profile" class="bottom-nav-item">
+      <span><i class="fa-solid fa-user"></i></span><span>Profile</span>
+    </a>
+  </div>
+</nav>
+
+<!-- OTP Modal -->
+<div class="modal-overlay" id="otp-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;text-align:center;margin-bottom:0.5rem;color:#86efac;"><i class="fa-solid fa-circle-check"></i></div>
+    <h3 style="text-align:center;">Ride Accepted!</h3>
+    <p id="otp-modal-driver" style="text-align:center;"></p>
+    <div style="background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);border-radius:0.75rem;padding:1rem;text-align:center;margin-bottom:1.25rem;">
+      <div style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;"><i class="fa-solid fa-lock"></i> Your OTP Code</div>
+      <div id="otp-display" style="font-size:2.5rem;font-weight:900;letter-spacing:0.4rem;color:#c4b5fd;"></div>
+      <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:0.4rem;">Share this with your driver to start the ride</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="closeOtpModal()"><i class="fa-solid fa-thumbs-up"></i> Got it!</button>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <div style="font-size:2.5rem;text-align:center;margin-bottom:0.5rem;color:#fca5a5;"><i class="fa-solid fa-circle-xmark"></i></div>
+    <h3 style="text-align:center;">Ride Rejected</h3>
+    <p id="reject-modal-msg" style="text-align:center;"></p>
+    <button class="btn btn-danger btn-full" onclick="closeRejectModal();location.reload()"><i class="fa-solid fa-magnifying-glass"></i> Find Another Ride</button>
+  </div>
+</div>
+
+<script>
+  const socket   = io();
+  const userId   = "{{ current_user_id }}";
+  const userRole = "{{ current_user_role }}";
+
+  socket.on('connect', () => { socket.emit('join_room', { room: userId }); });
+
+  socket.on('new_ride_notification', (data) => {
+    showToast('fa-motorcycle', 'New Ride Available!',
+      `${data.driver_name}: ${data.start_location} → ${data.destination}`, 'info');
+    loadRecentCount();
+  });
+
+  socket.on('ride_accept_update', (data) => {
+    document.getElementById('otp-display').textContent = data.otp;
+    document.getElementById('otp-modal-driver').textContent =
+      `${data.driver_name} accepted your ride. Show this OTP to your driver.`;
+    openModal('otp-modal');
+    showToast('fa-circle-check', 'Ride Accepted!', data.message, 'success');
+  });
+
+  socket.on('ride_reject_update', (data) => {
+    document.getElementById('reject-modal-msg').textContent = data.message;
+    openModal('reject-modal');
+    showToast('fa-circle-xmark', 'Ride Rejected', data.message, 'error');
+  });
+
+  socket.on('ride_request_alert', (data) => {
+    showToast('fa-bell', 'New Ride Request!',
+      `${data.passenger_name} wants a ride to ${data.destination}`, 'warning');
+    updateRequestCount(1);
+    loadHistory();
+  });
+
+  socket.on('ride_started',   (data) => { showToast('fa-rocket',        'Ride Started!',   data.message, 'success'); });
+  socket.on('ride_cancelled', (data) => { showToast('fa-ban',           'Ride Cancelled',  data.message, 'warning'); loadRecentCount(); });
+  socket.on('ride_completed', (data) => { showToast('fa-flag-checkered','Ride Completed!', data.message, 'success'); loadHistory(); });
+
+  // ── History ──────────────────────────────────
+  async function loadHistory() {
+    const res  = await fetch('/api/my-history');
+    const data = await res.json();
+    document.getElementById('stat-history').textContent = data.length;
+    const list = document.getElementById('history-list');
+    if (!data.length) {
+      list.innerHTML = `<div class="empty-state" style="padding:1.5rem;"><div class="empty-icon" style="font-size:2rem;"><i class="fa-solid fa-clock-rotate-left" style="color:#a78bfa;"></i></div><p>No ride history yet.</p></div>`;
+      return;
+    }
+    list.innerHTML = data.map(h => `
+      <div class="history-item" style="padding:0.85rem 0;border-bottom:1px solid rgba(255,255,255,0.06);" id="hist-${h.id}">
+        <div style="display:flex;align-items:center;gap:0.85rem;flex:1;min-width:0;">
+          <div class="avatar" style="font-size:1rem;width:38px;height:38px;">
+            <i class="fa-solid ${h.role==='Driver' ? 'fa-motorcycle' : 'fa-user'}"></i>
+          </div>
+          <div class="history-route" style="min-width:0;">
+            <div class="from" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${h.start_location} <i class="fa-solid fa-arrow-right" style="opacity:0.4;font-size:0.7rem;"></i> ${h.destination}
+            </div>
+            <div class="to">${h.start_time} &nbsp;&bull;&nbsp; <span class="history-badge badge-${h.role.toLowerCase()}">${h.role}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
+          <span class="history-badge badge-${h.status}">${h.status}</span>
+          <button onclick="deleteHistory('${h.id}')" class="btn btn-danger btn-sm" style="padding:0.35rem 0.65rem;" title="Delete">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function deleteHistory(id) {
+    if (!confirm('Delete this ride record?')) return;
+    const res  = await fetch(`/delete-history/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const el = document.getElementById(`hist-${id}`);
+      if (el) { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }
+      showToast('fa-trash', 'Deleted', 'Record removed.', 'info');
+      loadHistory();
+    } else { showToast('fa-circle-xmark', 'Error', data.message, 'error'); }
+  }
+
+  async function loadRecentCount() {
+    if (userRole !== 'driver') return;
+    const res  = await fetch('/api/pending-requests-count');
+    const data = await res.json();
+    updateRequestCount(data.count);
+  }
+
+  function updateRequestCount(n) {
+    ['req-count','bnav-req-count'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = n;
+      el.style.display = n > 0 ? 'flex' : 'none';
+    });
+  }
+
+  function openSidebar()      { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+  function closeSidebar()     { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+  function openModal(id)      { document.getElementById(id).classList.add('open'); }
+  function closeOtpModal()    { document.getElementById('otp-modal').classList.remove('open'); location.reload(); }
+  function closeRejectModal() { document.getElementById('reject-modal').classList.remove('open'); }
+
+  function showToast(icon, title, msg, type='info') {
+    const c  = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `<span class="toast-icon"><i class="fa-solid ${icon}"></i></span><div style="flex:1;min-width:0;"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    c.appendChild(el); el.onclick = () => el.remove();
+    setTimeout(() => el.remove(), 5500);
+  }
+
+  loadHistory();
+  loadRecentCount();
+  setInterval(loadRecentCount, 30000);
+</script>
+</body>
+</html>
